@@ -275,6 +275,182 @@
   .mobile-search input {
     margin-bottom: 1rem;
   }
+  
+  /* Login form mobile optimizations */
+  .login-card {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .login-form {
+    padding: 1rem;
+  }
+  
+  .password-requirements {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Enhanced login form styles */
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #f0fdf4 100%);
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .login-container {
+    padding: 2rem;
+  }
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.login-card:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Password strength indicator */
+.password-strength-bar {
+  transition: all 0.3s ease-in-out;
+  border-radius: 9999px;
+}
+
+.strength-very-weak { background-color: #ef4444; }
+.strength-weak { background-color: #f97316; }
+.strength-fair { background-color: #eab308; }
+.strength-good { background-color: #3b82f6; }
+.strength-strong { background-color: #10b981; }
+
+/* Input field enhancements */
+.enhanced-input {
+  transition: all 0.2s ease-in-out;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.enhanced-input:focus {
+  ring: 2px;
+  ring-offset: 2px;
+  transform: scale(1.01);
+}
+
+.enhanced-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.enhanced-input.success {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Password requirements grid */
+.password-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .password-requirements {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form validation animations */
+.validation-message {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading states */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Button enhancements */
+.enhanced-button {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.enhanced-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.enhanced-button:active {
+  transform: translateY(0);
+}
+
+.enhanced-button:disabled {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive typography */
+@media (max-width: 480px) {
+  .login-title {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  
+  .login-description {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .form-label {
+    font-size: 0.8rem;
+  }
+  
+  .validation-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* Focus management for accessibility */
+.focus-visible:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .login-card {
+    border: 2px solid #000;
+    background: #fff;
+  }
+  
+  .enhanced-input {
+    border: 2px solid #000;
+  }
+  
+  .password-strength-bar {
+    border: 1px solid #000;
+  }
 }
 
 /* Accessibility improvements */
