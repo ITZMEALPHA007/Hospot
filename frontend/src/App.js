@@ -618,14 +618,18 @@ const LandingPage = () => {
   );
 };
 
-// Login Page Component (Updated)
+// Login Page Component (Enhanced with Validations)
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
-    contact: '',
-    name: ''
+    email: '',
+    name: '',
+    password: ''
   });
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -634,82 +638,325 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.contact.trim() && formData.name.trim()) {
-      // Simulate login
-      login({
-        name: formData.name,
-        contact: formData.contact
-      });
-      navigate('/home');
+  // Validation functions
+  const validateName = (name) => {
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!name.trim()) {
+      return "Full name is required";
+    }
+    if (name.trim().length < 2) {
+      return "Name must be at least 2 characters long";
+    }
+    if (!nameRegex.test(name.trim())) {
+      return "Name can only contain letters and spaces";
+    }
+    return null;
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      return "Email address is required";
+    }
+    if (!emailRegex.test(email.trim())) {
+      return "Please enter a valid email address";
+    }
+    return null;
+  };
+
+  const validatePassword = (password) => {
+    if (!password) {
+      return "Password is required";
+    }
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    const missingRequirements = [];
+    if (!hasUppercase) missingRequirements.push("one uppercase letter");
+    if (!hasLowercase) missingRequirements.push("one lowercase letter");
+    if (!hasNumber) missingRequirements.push("one number");
+    if (!hasSpecialChar) missingRequirements.push("one special character");
+
+    if (missingRequirements.length > 0) {
+      return `Password must contain ${missingRequirements.join(", ")}`;
+    }
+
+    return null;
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: null
+      }));
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Validate all fields
+    const nameError = validateName(formData.name);
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+
+    const newErrors = {
+      name: nameError,
+      email: emailError,
+      password: passwordError
+    };
+
+    setErrors(newErrors);
+
+    // Check if there are any errors
+    const hasErrors = Object.values(newErrors).some(error => error !== null);
+    
+    if (!hasErrors) {
+      // Simulate login delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      login({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        contact: formData.email.trim()
+      });
+      navigate('/home');
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  const getPasswordStrength = () => {
+    const password = formData.password;
+    if (!password) return { strength: 0, label: '', color: 'bg-gray-200' };
+    
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
+
+    const levels = [
+      { strength: 0, label: '', color: 'bg-gray-200' },
+      { strength: 20, label: 'Very Weak', color: 'bg-red-500' },
+      { strength: 40, label: 'Weak', color: 'bg-red-400' },
+      { strength: 60, label: 'Fair', color: 'bg-yellow-500' },
+      { strength: 80, label: 'Good', color: 'bg-blue-500' },
+      { strength: 100, label: 'Strong', color: 'bg-green-500' }
+    ];
+
+    return levels[score];
+  };
+
+  const passwordStrength = getPasswordStrength();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <div 
-            className="flex items-center justify-center space-x-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate('/')}
-          >
-            <Activity className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
-          </div>
-          <CardTitle className="text-2xl">Welcome to Hospot</CardTitle>
-          <CardDescription>
-            Login to find and book hospital beds instantly
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Full Name *
-              </label>
-              <Input
-                type="text"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Email or Phone Number *
-              </label>
-              <Input
-                type="text"
-                placeholder="Enter your email or phone number"
-                value={formData.contact}
-                onChange={(e) => setFormData({...formData, contact: e.target.value})}
-                className="w-full"
-                required
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Login & Continue
-            </Button>
-            
-            <Button 
-              type="button"
-              variant="outline"
+      <div className="w-full max-w-md sm:max-w-lg">
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-4">
+            <div 
+              className="flex items-center justify-center space-x-2 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
-              className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Activity className="h-8 w-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
+            </div>
+            <CardTitle className="text-xl sm:text-2xl text-gray-900">Welcome to Hospot</CardTitle>
+            <CardDescription className="text-gray-600 px-2">
+              Create your account to find and book hospital beds instantly
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="px-4 sm:px-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Full Name Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <User className="h-4 w-4 mr-2 text-blue-600" />
+                  Full Name *
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full transition-colors ${
+                    errors.name 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                  }`}
+                  required
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-xs flex items-center">
+                    <span className="mr-1">⚠</span>
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <span className="text-blue-600 mr-2">@</span>
+                  Email Address *
+                </label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={`w-full transition-colors ${
+                    errors.email 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                  }`}
+                  required
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs flex items-center">
+                    <span className="mr-1">⚠</span>
+                    {errors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-blue-600" />
+                  Password *
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a secure password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className={`w-full pr-12 transition-colors ${
+                      errors.password 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                    }`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <span className="text-sm">👁️</span>
+                    ) : (
+                      <span className="text-sm">👁️‍🗨️</span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Password Strength Indicator */}
+                {formData.password && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
+                          style={{ width: `${passwordStrength.strength}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-600 min-w-16">{passwordStrength.label}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Password Requirements */}
+                <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-medium text-gray-700 mb-2">Password must contain:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                    <div className={`flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                      <span className="mr-1">{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
+                      Uppercase letter
+                    </div>
+                    <div className={`flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                      <span className="mr-1">{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
+                      Lowercase letter
+                    </div>
+                    <div className={`flex items-center ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                      <span className="mr-1">{/\d/.test(formData.password) ? '✓' : '○'}</span>
+                      Number
+                    </div>
+                    <div className={`flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
+                      <span className="mr-1">{/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '○'}</span>
+                      Special character
+                    </div>
+                  </div>
+                </div>
+
+                {errors.password && (
+                  <p className="text-red-500 text-xs flex items-center">
+                    <span className="mr-1">⚠</span>
+                    {errors.password}
+                  </p>
+                )}
+              </div>
+              
+              {/* Submit Button */}
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Create Account & Login
+                  </>
+                )}
+              </Button>
+              
+              {/* Back Button */}
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/')}
+                disabled={isSubmitting}
+                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 py-3 text-base transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+            </form>
+
+            {/* Additional Info */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-500 text-center px-4">
+                By creating an account, you agree to our Terms of Service and Privacy Policy. 
+                Your information is encrypted and secure.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
