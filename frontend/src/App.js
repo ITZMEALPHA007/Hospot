@@ -64,7 +64,7 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-// Booking Form Component
+// Booking Form Component (Updated to use new user data)
 const BookingForm = ({ hospital, bedType, isOpen, onClose }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
@@ -75,8 +75,8 @@ const BookingForm = ({ hospital, bedType, isOpen, onClose }) => {
     bloodGroup: '',
     
     // Contact Information
-    mobile: user?.contact || '',
-    email: '',
+    mobile: '',
+    email: user?.email || '',
     emergencyContactName: '',
     emergencyContactPhone: '',
     
