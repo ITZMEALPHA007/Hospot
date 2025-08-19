@@ -1,56 +1,505 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, useNavigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Badge } from "./components/ui/badge";
 import { Progress } from "./components/ui/progress";
-import { Search, MapPin, Phone, Star, Bed, ArrowLeft, Activity, Calendar, Clock, Users, CheckCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
+import { Textarea } from "./components/ui/textarea";
+import { Search, MapPin, Phone, Star, Bed, ArrowLeft, Activity, Calendar, Clock, Users, CheckCircle, User, Heart, Shield, FileText, X } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Header Component with Logo Navigation
+// Authentication Context
+const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if user is logged in from localStorage
+    const savedUser = localStorage.getItem('hospot_user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const login = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    localStorage.setItem('hospot_user', JSON.stringify(userData));
+  };
+
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('hospot_user');
+  };
+
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// Booking Form Component
+const BookingForm = ({ hospital, bedType, isOpen, onClose }) => {
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({
+    // Personal Information
+    fullName: user?.name || '',
+    age: '',
+    gender: '',
+    bloodGroup: '',
+    
+    // Contact Information
+    mobile: user?.contact || '',
+    email: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    
+    // Medical Information
+    primaryCondition: '',
+    allergies: '',
+    currentMedications: '',
+    previousSurgeries: '',
+    
+    // Insurance Information
+    insuranceProvider: '',
+    policyNumber: '',
+    
+    // Additional Information
+    specialRequests: '',
+    preferredAdmissionDate: '',
+    admissionTime: 'immediate'
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Simulate booking submission
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      alert(`Booking Confirmation!\n\nHospital: ${hospital?.name}\nBed Type: ${bedType}\nPatient: ${formData.fullName}\n\nYour bed booking request has been submitted successfully. You will receive a confirmation call within 15 minutes.`);
+      
+      onClose();
+      setFormData({
+        fullName: user?.name || '',
+        age: '',
+        gender: '',
+        bloodGroup: '',
+        mobile: user?.contact || '',
+        email: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        primaryCondition: '',
+        allergies: '',
+        currentMedications: '',
+        previousSurgeries: '',
+        insuranceProvider: '',
+        policyNumber: '',
+        specialRequests: '',
+        preferredAdmissionDate: '',
+        admissionTime: 'immediate'
+      });
+    } catch (error) {
+      alert('Booking failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center text-2xl">
+            <FileText className="h-6 w-6 mr-2 text-blue-600" />
+            Bed Booking Application
+          </DialogTitle>
+          <DialogDescription>
+            {hospital?.name} - {bedType} Bed Reservation
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Personal Information */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Personal Information
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Full Name *</label>
+                    <Input
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      placeholder="Enter full name"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Age *</label>
+                      <Input
+                        type="number"
+                        value={formData.age}
+                        onChange={(e) => handleInputChange('age', e.target.value)}
+                        placeholder="Age"
+                        min="1"
+                        max="120"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Gender *</label>
+                      <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Blood Group *</label>
+                    <Select value={formData.bloodGroup} onValueChange={(value) => handleInputChange('bloodGroup', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select blood group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A+">A+</SelectItem>
+                        <SelectItem value="A-">A-</SelectItem>
+                        <SelectItem value="B+">B+</SelectItem>
+                        <SelectItem value="B-">B-</SelectItem>
+                        <SelectItem value="AB+">AB+</SelectItem>
+                        <SelectItem value="AB-">AB-</SelectItem>
+                        <SelectItem value="O+">O+</SelectItem>
+                        <SelectItem value="O-">O-</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-green-900 mb-3 flex items-center">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Contact Information
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Mobile Number *</label>
+                    <Input
+                      type="tel"
+                      value={formData.mobile}
+                      onChange={(e) => handleInputChange('mobile', e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Email Address</label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="example@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Emergency Contact Name *</label>
+                    <Input
+                      value={formData.emergencyContactName}
+                      onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                      placeholder="Emergency contact person"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Emergency Contact Phone *</label>
+                    <Input
+                      type="tel"
+                      value={formData.emergencyContactPhone}
+                      onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Medical Information */}
+              <div className="bg-red-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-red-900 mb-3 flex items-center">
+                  <Heart className="h-4 w-4 mr-2" />
+                  Medical Information
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Primary Condition/Reason for Admission *</label>
+                    <Textarea
+                      value={formData.primaryCondition}
+                      onChange={(e) => handleInputChange('primaryCondition', e.target.value)}
+                      placeholder="Describe the medical condition or reason for hospital admission"
+                      rows={3}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Known Allergies</label>
+                    <Input
+                      value={formData.allergies}
+                      onChange={(e) => handleInputChange('allergies', e.target.value)}
+                      placeholder="Food, medications, environmental allergies (or None)"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Current Medications</label>
+                    <Textarea
+                      value={formData.currentMedications}
+                      onChange={(e) => handleInputChange('currentMedications', e.target.value)}
+                      placeholder="List all current medications, dosages, and frequency"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Previous Surgeries/Major Medical History</label>
+                    <Textarea
+                      value={formData.previousSurgeries}
+                      onChange={(e) => handleInputChange('previousSurgeries', e.target.value)}
+                      placeholder="Any previous surgeries, chronic conditions, or major medical events"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Insurance Information */}
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-purple-900 mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Insurance Information
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Insurance Provider</label>
+                    <Input
+                      value={formData.insuranceProvider}
+                      onChange={(e) => handleInputChange('insuranceProvider', e.target.value)}
+                      placeholder="Insurance company name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Policy/Member Number</label>
+                    <Input
+                      value={formData.policyNumber}
+                      onChange={(e) => handleInputChange('policyNumber', e.target.value)}
+                      placeholder="Policy or member ID number"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              Admission Preferences
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Preferred Admission Date</label>
+                <Input
+                  type="date"
+                  value={formData.preferredAdmissionDate}
+                  onChange={(e) => handleInputChange('preferredAdmissionDate', e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Admission Urgency</label>
+                <Select value={formData.admissionTime} onValueChange={(value) => handleInputChange('admissionTime', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Immediate/Emergency</SelectItem>
+                    <SelectItem value="today">Within Today</SelectItem>
+                    <SelectItem value="week">Within This Week</SelectItem>
+                    <SelectItem value="flexible">Flexible Timing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Special Requests or Additional Information</label>
+              <Textarea
+                value={formData.specialRequests}
+                onChange={(e) => handleInputChange('specialRequests', e.target.value)}
+                placeholder="Any special accommodation requests, dietary requirements, or additional information"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          {/* Booking Summary */}
+          <div className="bg-blue-100 p-4 rounded-lg border border-blue-200">
+            <h3 className="font-semibold text-blue-900 mb-2">Booking Summary</h3>
+            <div className="text-sm text-blue-800">
+              <p><strong>Hospital:</strong> {hospital?.name}</p>
+              <p><strong>Bed Type:</strong> {bedType}</p>
+              <p><strong>Patient:</strong> {formData.fullName || 'Not specified'}</p>
+              <p><strong>Contact:</strong> {formData.mobile || 'Not specified'}</p>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-between items-center pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Submit Booking Request
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Header Component with Auth
 const Header = ({ showHomeButton = false }) => {
   const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div 
           className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate('/home')}
+          onClick={() => navigate(isAuthenticated ? '/home' : '/')}
         >
           <Activity className="h-8 w-8 text-blue-600" />
           <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
         </div>
         <div className="flex items-center space-x-4">
-          {showHomeButton && (
+          {isAuthenticated ? (
+            <>
+              {showHomeButton && (
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/home')}
+                  className="text-gray-600"
+                >
+                  Home
+                </Button>
+              )}
+              <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+                className="text-gray-600"
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
             <Button 
-              variant="outline"
-              onClick={() => navigate('/home')}
-              className="text-gray-600"
+              onClick={() => navigate('/login')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
             >
-              Home
+              Login
             </Button>
           )}
-          <Button 
-            onClick={() => navigate('/login')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-          >
-            Login
-          </Button>
         </div>
       </div>
     </header>
   );
 };
 
-// Landing Page Component
+// Landing Page Component (Updated)
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -84,10 +533,10 @@ const LandingPage = () => {
             <Button 
               size="lg"
               variant="outline"
-              onClick={() => navigate('/home')}
+              onClick={() => navigate('/login')}
               className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg"
             >
-              Browse Hospitals
+              Login to Continue
             </Button>
           </div>
 
@@ -135,6 +584,21 @@ const LandingPage = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Call to Action */}
+          <div className="mt-16 bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Get Started?</h3>
+            <p className="text-gray-600 mb-6">
+              Create your account or login to access real-time hospital bed availability and book instantly.
+            </p>
+            <Button 
+              size="lg"
+              onClick={() => navigate('/login')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
+            >
+              Login Now
+            </Button>
+          </div>
         </div>
       </main>
 
@@ -154,18 +618,30 @@ const LandingPage = () => {
   );
 };
 
-// Login Page Component
+// Login Page Component (Updated)
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     contact: '',
-    loginType: 'email'
+    name: ''
   });
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simple validation - no actual OTP for demo
-    if (formData.contact.trim()) {
+    if (formData.contact.trim() && formData.name.trim()) {
+      // Simulate login
+      login({
+        name: formData.name,
+        contact: formData.contact
+      });
       navigate('/home');
     }
   };
@@ -176,12 +652,12 @@ const LoginPage = () => {
         <CardHeader className="text-center">
           <div 
             className="flex items-center justify-center space-x-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/')}
           >
             <Activity className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
           </div>
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Hospot</CardTitle>
           <CardDescription>
             Login to find and book hospital beds instantly
           </CardDescription>
@@ -190,7 +666,20 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Email or Phone Number
+                Full Name *
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Email or Phone Number *
               </label>
               <Input
                 type="text"
@@ -206,7 +695,7 @@ const LoginPage = () => {
               type="submit" 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Login
+              Login & Continue
             </Button>
             
             <Button 
@@ -225,7 +714,7 @@ const LoginPage = () => {
   );
 };
 
-// Home Page Component (Hospital List)
+// Home Page Component (Protected)
 const HomePage = () => {
   const [hospitals, setHospitals] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -267,35 +756,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div 
-              className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/home')}
-            >
-              <Activity className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/')}
-                className="text-gray-600"
-              >
-                Landing
-              </Button>
-              <Button 
-                onClick={() => navigate('/login')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-              >
-                Login
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-8">
         {/* Search Section */}
@@ -432,12 +893,13 @@ const HomePage = () => {
   );
 };
 
-// Hospital Progress/Detail Page
+// Hospital Progress/Detail Page (Updated with Booking Form)
 const HospitalProgressPage = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
   const [hospital, setHospital] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bookingFormOpen, setBookingFormOpen] = useState(false);
   const [selectedBedType, setSelectedBedType] = useState(null);
 
   useEffect(() => {
@@ -457,8 +919,7 @@ const HospitalProgressPage = () => {
 
   const handleBookNow = (bedType) => {
     setSelectedBedType(bedType);
-    // Simulate booking - in real app this would open a booking form or redirect to booking page
-    alert(`Booking ${bedType} bed at ${hospital.name}. This would normally open a booking form.`);
+    setBookingFormOpen(true);
   };
 
   const getBedProgress = (available, total = 100) => {
@@ -696,6 +1157,17 @@ const HospitalProgressPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Booking Form Modal */}
+        <BookingForm
+          hospital={hospital}
+          bedType={selectedBedType}
+          isOpen={bookingFormOpen}
+          onClose={() => {
+            setBookingFormOpen(false);
+            setSelectedBedType(null);
+          }}
+        />
       </main>
     </div>
   );
@@ -704,16 +1176,26 @@ const HospitalProgressPage = () => {
 // Main App Component
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/hospital/:hospitalId" element={<HospitalProgressPage />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/home" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/hospital/:hospitalId" element={
+              <ProtectedRoute>
+                <HospitalProgressPage />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </AuthProvider>
   );
 }
 
