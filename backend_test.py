@@ -2,6 +2,7 @@ import requests
 import sys
 from datetime import datetime
 import json
+import uuid
 
 class HospotAPITester:
     def __init__(self, base_url="https://pharmastore-6.preview.emergentagent.com"):
@@ -9,8 +10,12 @@ class HospotAPITester:
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
         self.tests_passed = 0
+        self.test_user_id = str(uuid.uuid4())
+        self.test_medicine_id = None
+        self.test_prescription_id = None
+        self.test_order_id = None
 
-    def run_test(self, name, method, endpoint, expected_status, params=None, expected_count=None):
+    def run_test(self, name, method, endpoint, expected_status, params=None, data=None, expected_count=None):
         """Run a single API test"""
         url = f"{self.api_url}/{endpoint}"
         
@@ -19,8 +24,16 @@ class HospotAPITester:
         print(f"   URL: {url}")
         
         try:
+            headers = {'Content-Type': 'application/json'}
+            
             if method == 'GET':
                 response = requests.get(url, params=params, timeout=10)
+            elif method == 'POST':
+                response = requests.post(url, json=data, headers=headers, timeout=10)
+            elif method == 'PUT':
+                response = requests.put(url, json=data, headers=headers, timeout=10)
+            elif method == 'DELETE':
+                response = requests.delete(url, timeout=10)
             
             print(f"   Status Code: {response.status_code}")
             
@@ -31,14 +44,14 @@ class HospotAPITester:
                 
                 # Try to parse JSON response
                 try:
-                    data = response.json()
-                    if isinstance(data, list) and expected_count:
-                        print(f"   Response contains {len(data)} items (expected: {expected_count})")
-                        if len(data) != expected_count:
-                            print(f"⚠️  Warning: Expected {expected_count} items, got {len(data)}")
-                    elif isinstance(data, dict):
-                        print(f"   Response keys: {list(data.keys())}")
-                    return success, data
+                    response_data = response.json()
+                    if isinstance(response_data, list) and expected_count is not None:
+                        print(f"   Response contains {len(response_data)} items (expected: {expected_count})")
+                        if len(response_data) != expected_count:
+                            print(f"⚠️  Warning: Expected {expected_count} items, got {len(response_data)}")
+                    elif isinstance(response_data, dict):
+                        print(f"   Response keys: {list(response_data.keys())}")
+                    return success, response_data
                 except json.JSONDecodeError:
                     print(f"   Response is not JSON: {response.text[:100]}...")
                     return success, response.text
