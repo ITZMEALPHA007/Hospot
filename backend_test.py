@@ -436,9 +436,8 @@ class HospotAPITester:
         success, response = self.run_test(
             "Update Order Status",
             "PUT",
-            f"orders/{self.test_order_id}/status",
-            200,
-            data="confirmed"
+            f"orders/{self.test_order_id}/status?status=confirmed",
+            200
         )
         
         if success and isinstance(response, dict):
