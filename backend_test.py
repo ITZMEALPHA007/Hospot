@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 
 class HospotAPITester:
-    def __init__(self, base_url="https://e1ea39c1-d0f2-4a7d-af6f-cd5f60ba557d.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pharmastore-6.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
