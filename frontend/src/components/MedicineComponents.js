@@ -8,10 +8,92 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Search, ShoppingCart, ArrowLeft, Upload, FileText, Trash2, Plus, Minus, Package, CreditCard, Truck } from "lucide-react";
+import { Search, ShoppingCart, ArrowLeft, Upload, FileText, Trash2, Plus, Minus, Package, CreditCard, Truck, Activity, Bed, Pill } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Header Component (simplified version for medicine components)
+const Header = () => {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    localStorage.removeItem('hospot_user');
+    navigate('/');
+  };
+
+  const savedUser = localStorage.getItem('hospot_user');
+  const user = savedUser ? JSON.parse(savedUser) : null;
+
+  return (
+    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div 
+          className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate('/home')}
+        >
+          <Activity className="h-8 w-8 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className="hidden md:flex items-center space-x-6">
+          <Button 
+            variant="ghost"
+            onClick={() => navigate('/home')}
+            className="text-gray-700 hover:text-blue-600"
+          >
+            <Bed className="h-4 w-4 mr-2" />
+            Hospitals
+          </Button>
+          <Button 
+            variant="ghost"
+            onClick={() => navigate('/medicines')}
+            className="text-gray-700 hover:text-blue-600"
+          >
+            <Pill className="h-4 w-4 mr-2" />
+            Medicines
+          </Button>
+          <Button 
+            variant="ghost"
+            onClick={() => navigate('/prescriptions')}
+            className="text-gray-700 hover:text-blue-600"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Prescriptions
+          </Button>
+          <Button 
+            variant="ghost"
+            onClick={() => navigate('/cart')}
+            className="text-gray-700 hover:text-blue-600 relative"
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Cart
+          </Button>
+          <Button 
+            variant="ghost"
+            onClick={() => navigate('/orders')}
+            className="text-gray-700 hover:text-blue-600"
+          >
+            <Package className="h-4 w-4 mr-2" />
+            Orders
+          </Button>
+        </nav>
+        
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-600 hidden sm:block">Welcome, {user?.name}</span>
+          <Button 
+            onClick={handleLogout}
+            variant="outline"
+            className="text-gray-600"
+          >
+            Logout
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+};
 
 // Prescriptions Page Component
 export const PrescriptionsPage = () => {
