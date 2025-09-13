@@ -53,6 +53,149 @@ class HospitalCreate(BaseModel):
     distance: Optional[str] = "2.5 km"
     emergency: Optional[bool] = True
 
+# Medicine System Models
+class MedicineCategory(str, Enum):
+    PAIN_RELIEF = "Pain Relief"
+    ANTIBIOTICS = "Antibiotics"
+    VITAMINS = "Vitamins"
+    DIABETES = "Diabetes"
+    HEART = "Heart & Blood Pressure"
+    DIGESTIVE = "Digestive Health"
+    RESPIRATORY = "Respiratory"
+    SKIN_CARE = "Skin Care"
+    MENTAL_HEALTH = "Mental Health"
+    WOMEN_HEALTH = "Women's Health"
+    CHILD_HEALTH = "Child Health"
+    EYE_CARE = "Eye Care"
+    SUPPLEMENTS = "Supplements"
+    FIRST_AID = "First Aid"
+
+class MedicineType(str, Enum):
+    OTC = "Over-the-Counter"
+    PRESCRIPTION = "Prescription Required"
+
+class Medicine(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    category: MedicineCategory
+    type: MedicineType
+    description: str
+    price: float
+    dosage: str
+    sideEffects: List[str] = []
+    activeIngredients: List[str] = []
+    manufacturer: str
+    expiryDate: str
+    inStock: int
+    imageUrl: Optional[str] = None
+    prescriptionRequired: bool
+    minAge: Optional[int] = None
+    maxAge: Optional[int] = None
+    warnings: List[str] = []
+    usage: str
+    createdAt: datetime = Field(default_factory=datetime.now)
+
+class MedicineCreate(BaseModel):
+    name: str
+    category: MedicineCategory
+    type: MedicineType
+    description: str
+    price: float
+    dosage: str
+    sideEffects: List[str] = []
+    activeIngredients: List[str] = []
+    manufacturer: str
+    expiryDate: str
+    inStock: int
+    imageUrl: Optional[str] = None
+    prescriptionRequired: bool
+    minAge: Optional[int] = None
+    maxAge: Optional[int] = None
+    warnings: List[str] = []
+    usage: str
+
+# Prescription Models
+class Prescription(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
+    doctorName: str
+    hospitalName: str
+    prescriptionDate: datetime
+    medicines: List[Dict[str, Any]]  # [{"medicineId": str, "medicineName": str, "dosage": str, "duration": str}]
+    notes: Optional[str] = None
+    imageUrl: Optional[str] = None  # Prescription image
+    isUsed: bool = False
+    createdAt: datetime = Field(default_factory=datetime.now)
+
+class PrescriptionCreate(BaseModel):
+    userId: str
+    doctorName: str
+    hospitalName: str
+    prescriptionDate: datetime
+    medicines: List[Dict[str, Any]]
+    notes: Optional[str] = None
+    imageUrl: Optional[str] = None
+
+# Shopping Cart Models
+class CartItem(BaseModel):
+    medicineId: str
+    medicineName: str
+    price: float
+    quantity: int
+    prescriptionId: Optional[str] = None
+
+class Cart(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
+    items: List[CartItem] = []
+    totalAmount: float = 0.0
+    updatedAt: datetime = Field(default_factory=datetime.now)
+
+# Order Models
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    PREPARING = "preparing"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+
+class PaymentMethod(str, Enum):
+    CASH_ON_DELIVERY = "cash_on_delivery"
+    CARD = "card"
+    UPI = "upi"
+
+class OrderItem(BaseModel):
+    medicineId: str
+    medicineName: str
+    price: float
+    quantity: int
+    prescriptionId: Optional[str] = None
+
+class Order(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
+    items: List[OrderItem]
+    totalAmount: float
+    deliveryAddress: str
+    contactNumber: str
+    paymentMethod: PaymentMethod
+    status: OrderStatus = OrderStatus.PENDING
+    orderDate: datetime = Field(default_factory=datetime.now)
+    estimatedDelivery: Optional[datetime] = None
+    notes: Optional[str] = None
+    prescriptionIds: List[str] = []
+
+class OrderCreate(BaseModel):
+    userId: str
+    items: List[OrderItem]
+    totalAmount: float
+    deliveryAddress: str
+    contactNumber: str
+    paymentMethod: PaymentMethod
+    notes: Optional[str] = None
+    prescriptionIds: List[str] = []
+
 # Initialize dummy hospital data
 async def init_dummy_data():
     """Initialize the database with dummy hospital data"""
