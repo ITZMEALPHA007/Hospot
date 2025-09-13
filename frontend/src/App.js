@@ -1951,6 +1951,11 @@ function App() {
                 <OrdersPage />
               </ProtectedRoute>
             } />
+            <Route path="/checkout" element={
+              <ProtectedRoute>
+                <CheckoutPage />
+              </ProtectedRoute>
+            } />
             <Route path="/medicines" element={
               <ProtectedRoute>
                 <MedicinesPage />
