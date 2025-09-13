@@ -1925,6 +1925,16 @@ function App() {
                 <HospitalProgressPage />
               </ProtectedRoute>
             } />
+            <Route path="/medicines" element={
+              <ProtectedRoute>
+                <MedicinesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicine/:medicineId" element={
+              <ProtectedRoute>
+                <MedicineDetailPage />
+              </ProtectedRoute>
+            } />
           </Routes>
         </BrowserRouter>
       </div>
