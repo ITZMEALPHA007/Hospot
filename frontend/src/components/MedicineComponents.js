@@ -898,6 +898,7 @@ export const CheckoutPage = () => {
 export const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchOrders = async () => {
     setLoading(true);
