@@ -454,6 +454,53 @@ const Header = ({ showHomeButton = false }) => {
           <Activity className="h-8 w-8 text-blue-600" />
           <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
         </div>
+
+        {/* Navigation Menu for Authenticated Users */}
+        {isAuthenticated && (
+          <nav className="hidden md:flex items-center space-x-6">
+            <Button 
+              variant="ghost"
+              onClick={() => navigate('/home')}
+              className="text-gray-700 hover:text-blue-600"
+            >
+              <Bed className="h-4 w-4 mr-2" />
+              Hospitals
+            </Button>
+            <Button 
+              variant="ghost"
+              onClick={() => navigate('/medicines')}
+              className="text-gray-700 hover:text-blue-600"
+            >
+              <Pill className="h-4 w-4 mr-2" />
+              Medicines
+            </Button>
+            <Button 
+              variant="ghost"
+              onClick={() => navigate('/prescriptions')}
+              className="text-gray-700 hover:text-blue-600"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Prescriptions
+            </Button>
+            <Button 
+              variant="ghost"
+              onClick={() => navigate('/cart')}
+              className="text-gray-700 hover:text-blue-600 relative"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Cart
+            </Button>
+            <Button 
+              variant="ghost"
+              onClick={() => navigate('/orders')}
+              className="text-gray-700 hover:text-blue-600"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Orders
+            </Button>
+          </nav>
+        )}
+        
         <div className="flex items-center space-x-4">
           {isAuthenticated ? (
             <>
@@ -461,12 +508,12 @@ const Header = ({ showHomeButton = false }) => {
                 <Button 
                   variant="outline"
                   onClick={() => navigate('/home')}
-                  className="text-gray-600"
+                  className="text-gray-600 md:hidden"
                 >
                   Home
                 </Button>
               )}
-              <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+              <span className="text-sm text-gray-600 hidden sm:block">Welcome, {user?.name}</span>
               <Button 
                 onClick={handleLogout}
                 variant="outline"
