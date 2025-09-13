@@ -68,16 +68,382 @@ class HospotAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
 
-    def test_api_root(self):
-        """Test API root endpoint"""
+    # Medicine API Tests
+    def test_get_all_medicines(self):
+        """Test getting all medicines"""
         success, response = self.run_test(
-            "API Root",
-            "GET", 
-            "",
+            "Get All Medicines",
+            "GET",
+            "medicines",
+            200,
+            expected_count=10
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} medicines")
+            if len(response) > 0:
+                medicine = response[0]
+                self.test_medicine_id = medicine.get('id')  # Store for later tests
+                required_fields = ['id', 'name', 'category', 'type', 'description', 'price', 'dosage', 'prescriptionRequired']
+                missing_fields = [field for field in required_fields if field not in medicine]
+                if missing_fields:
+                    print(f"⚠️  Missing fields in medicine data: {missing_fields}")
+                else:
+                    print("✅ All required fields present in medicine data")
+                    print(f"   Sample medicine: {medicine['name']} - Price: ${medicine['price']}, Category: {medicine['category']}")
+        
+        return success, response
+
+    def test_get_medicine_categories(self):
+        """Test getting medicine categories"""
+        success, response = self.run_test(
+            "Get Medicine Categories",
+            "GET",
+            "medicines/categories",
             200
         )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} categories")
+            if len(response) > 0:
+                category = response[0]
+                if 'value' in category and 'label' in category:
+                    print("✅ Categories have correct structure")
+                    print(f"   Sample category: {category['label']}")
+                else:
+                    print("⚠️  Categories missing value/label structure")
+        
+        return success
+
+    def test_search_medicines(self):
+        """Test medicine search functionality"""
+        # Test search by name
+        success1, response1 = self.run_test(
+            "Search Medicines by Name (Paracetamol)",
+            "GET",
+            "medicines",
+            200,
+            params={"search": "Paracetamol"}
+        )
+        
+        if success1 and isinstance(response1, list):
+            paracetamol_medicines = [m for m in response1 if 'Paracetamol' in m.get('name', '')]
+            print(f"   Found {len(paracetamol_medicines)} medicines with 'Paracetamol' in name")
+        
+        # Test filter by category
+        success2, response2 = self.run_test(
+            "Filter Medicines by Category (Pain Relief)",
+            "GET",
+            "medicines",
+            200,
+            params={"category": "Pain Relief"}
+        )
+        
+        if success2 and isinstance(response2, list):
+            pain_relief_medicines = [m for m in response2 if m.get('category') == 'Pain Relief']
+            print(f"   Found {len(pain_relief_medicines)} Pain Relief medicines")
+        
+        # Test filter by prescription requirement
+        success3, response3 = self.run_test(
+            "Filter Medicines by Prescription (OTC)",
+            "GET",
+            "medicines",
+            200,
+            params={"prescription_required": False}
+        )
+        
+        if success3 and isinstance(response3, list):
+            otc_medicines = [m for m in response3 if not m.get('prescriptionRequired', True)]
+            print(f"   Found {len(otc_medicines)} Over-the-Counter medicines")
+        
+        return success1 and success2 and success3
+
+    def test_get_specific_medicine(self, medicine_id):
+        """Test getting a specific medicine by ID"""
+        success, response = self.run_test(
+            f"Get Medicine by ID",
+            "GET",
+            f"medicines/{medicine_id}",
+            200
+        )
+        
         if success and isinstance(response, dict):
-            print(f"   Message: {response.get('message', 'No message found')}")
+            print(f"   Medicine: {response.get('name', 'Unknown')}")
+            print(f"   Category: {response.get('category', 'Unknown')}")
+            print(f"   Price: ${response.get('price', 0)}")
+        
+        return success
+
+    # Prescription API Tests
+    def test_create_prescription(self):
+        """Test creating a new prescription"""
+        prescription_data = {
+            "userId": self.test_user_id,
+            "doctorName": "Dr. Sarah Johnson",
+            "hospitalName": "City General Hospital",
+            "prescriptionDate": datetime.now().isoformat(),
+            "medicines": [
+                {
+                    "medicineId": self.test_medicine_id or "test-medicine-id",
+                    "medicineName": "Amoxicillin 500mg",
+                    "dosage": "1 capsule 3 times daily",
+                    "duration": "7 days"
+                }
+            ],
+            "notes": "Take with food to avoid stomach upset"
+        }
+        
+        success, response = self.run_test(
+            "Create Prescription",
+            "POST",
+            "prescriptions",
+            200,
+            data=prescription_data
+        )
+        
+        if success and isinstance(response, dict):
+            self.test_prescription_id = response.get('id')
+            print(f"   Created prescription ID: {self.test_prescription_id}")
+            print(f"   Doctor: {response.get('doctorName', 'Unknown')}")
+        
+        return success
+
+    def test_get_user_prescriptions(self):
+        """Test getting user prescriptions"""
+        success, response = self.run_test(
+            "Get User Prescriptions",
+            "GET",
+            f"prescriptions/user/{self.test_user_id}",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} prescriptions for user")
+            if len(response) > 0:
+                prescription = response[0]
+                print(f"   Sample prescription: Doctor {prescription.get('doctorName', 'Unknown')}")
+        
+        return success
+
+    def test_get_specific_prescription(self):
+        """Test getting a specific prescription by ID"""
+        if not self.test_prescription_id:
+            print("⚠️  Skipping - No prescription ID available")
+            return True
+            
+        success, response = self.run_test(
+            "Get Prescription by ID",
+            "GET",
+            f"prescriptions/{self.test_prescription_id}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Prescription Doctor: {response.get('doctorName', 'Unknown')}")
+            print(f"   Used Status: {response.get('isUsed', False)}")
+        
+        return success
+
+    def test_mark_prescription_used(self):
+        """Test marking prescription as used"""
+        if not self.test_prescription_id:
+            print("⚠️  Skipping - No prescription ID available")
+            return True
+            
+        success, response = self.run_test(
+            "Mark Prescription as Used",
+            "PUT",
+            f"prescriptions/{self.test_prescription_id}/use",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message')}")
+        
+        return success
+
+    # Shopping Cart API Tests
+    def test_get_cart(self):
+        """Test getting user's cart"""
+        success, response = self.run_test(
+            "Get User Cart",
+            "GET",
+            f"cart/{self.test_user_id}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Cart ID: {response.get('id', 'Unknown')}")
+            print(f"   Items: {len(response.get('items', []))}")
+            print(f"   Total: ${response.get('totalAmount', 0)}")
+        
+        return success
+
+    def test_add_to_cart(self):
+        """Test adding item to cart"""
+        if not self.test_medicine_id:
+            print("⚠️  Skipping - No medicine ID available")
+            return True
+            
+        cart_item = {
+            "medicineId": self.test_medicine_id,
+            "medicineName": "Paracetamol 500mg",
+            "price": 15.99,
+            "quantity": 2
+        }
+        
+        success, response = self.run_test(
+            "Add Item to Cart",
+            "POST",
+            f"cart/{self.test_user_id}/add",
+            200,
+            data=cart_item
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message')}")
+        
+        return success
+
+    def test_update_cart_item(self):
+        """Test updating cart item quantity"""
+        if not self.test_medicine_id:
+            print("⚠️  Skipping - No medicine ID available")
+            return True
+            
+        success, response = self.run_test(
+            "Update Cart Item Quantity",
+            "PUT",
+            f"cart/{self.test_user_id}/update?medicine_id={self.test_medicine_id}&quantity=3",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message')}")
+        
+        return success
+
+    def test_remove_from_cart(self):
+        """Test removing item from cart"""
+        if not self.test_medicine_id:
+            print("⚠️  Skipping - No medicine ID available")
+            return True
+            
+        success, response = self.run_test(
+            "Remove Item from Cart",
+            "DELETE",
+            f"cart/{self.test_user_id}/remove/{self.test_medicine_id}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message')}")
+        
+        return success
+
+    def test_clear_cart(self):
+        """Test clearing user's cart"""
+        success, response = self.run_test(
+            "Clear Cart",
+            "DELETE",
+            f"cart/{self.test_user_id}/clear",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message')}")
+        
+        return success
+
+    # Order API Tests
+    def test_create_order(self):
+        """Test creating a new order"""
+        order_data = {
+            "userId": self.test_user_id,
+            "items": [
+                {
+                    "medicineId": self.test_medicine_id or "test-medicine-id",
+                    "medicineName": "Paracetamol 500mg",
+                    "price": 15.99,
+                    "quantity": 2
+                }
+            ],
+            "totalAmount": 31.98,
+            "deliveryAddress": "123 Main Street, Downtown, City 12345",
+            "contactNumber": "+1-555-0123",
+            "paymentMethod": "cash_on_delivery",
+            "notes": "Please call before delivery"
+        }
+        
+        success, response = self.run_test(
+            "Create Order",
+            "POST",
+            "orders",
+            200,
+            data=order_data
+        )
+        
+        if success and isinstance(response, dict):
+            self.test_order_id = response.get('id')
+            print(f"   Created order ID: {self.test_order_id}")
+            print(f"   Status: {response.get('status', 'Unknown')}")
+            print(f"   Total: ${response.get('totalAmount', 0)}")
+        
+        return success
+
+    def test_get_user_orders(self):
+        """Test getting user orders"""
+        success, response = self.run_test(
+            "Get User Orders",
+            "GET",
+            f"orders/user/{self.test_user_id}",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} orders for user")
+            if len(response) > 0:
+                order = response[0]
+                print(f"   Sample order: Status {order.get('status', 'Unknown')}, Total ${order.get('totalAmount', 0)}")
+        
+        return success
+
+    def test_get_specific_order(self):
+        """Test getting a specific order by ID"""
+        if not self.test_order_id:
+            print("⚠️  Skipping - No order ID available")
+            return True
+            
+        success, response = self.run_test(
+            "Get Order by ID",
+            "GET",
+            f"orders/{self.test_order_id}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Order Status: {response.get('status', 'Unknown')}")
+            print(f"   Delivery Address: {response.get('deliveryAddress', 'Unknown')}")
+        
+        return success
+
+    def test_update_order_status(self):
+        """Test updating order status"""
+        if not self.test_order_id:
+            print("⚠️  Skipping - No order ID available")
+            return True
+            
+        success, response = self.run_test(
+            "Update Order Status",
+            "PUT",
+            f"orders/{self.test_order_id}/status",
+            200,
+            data="confirmed"
+        )
+        
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message')}")
+        
         return success
 
     def test_get_all_hospitals(self):
