@@ -1935,6 +1935,31 @@ function App() {
                 <MedicineDetailPage />
               </ProtectedRoute>
             } />
+            <Route path="/prescriptions" element={
+              <ProtectedRoute>
+                <PrescriptionsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/cart" element={
+              <ProtectedRoute>
+                <CartPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/orders" element={
+              <ProtectedRoute>
+                <OrdersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicines" element={
+              <ProtectedRoute>
+                <MedicinesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicine/:medicineId" element={
+              <ProtectedRoute>
+                <MedicineDetailPage />
+              </ProtectedRoute>
+            } />
           </Routes>
         </BrowserRouter>
       </div>
