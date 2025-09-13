@@ -825,6 +825,7 @@ async def update_order_status(order_id: str, status: OrderStatus):
 @app.on_event("startup")
 async def startup_event():
     await init_dummy_data()
+    await init_medicine_data()
 
 # Include the router in the main app
 app.include_router(api_router)
