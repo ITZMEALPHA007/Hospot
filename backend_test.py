@@ -559,14 +559,20 @@ class HospotAPITester:
         return success
 
 def main():
-    print("🏥 Starting Hospot API Tests")
-    print("=" * 50)
+    print("🏥 Starting Hospot Medicine System API Tests")
+    print("=" * 60)
     
     # Setup
     tester = HospotAPITester()
     
+    print(f"🧪 Test User ID: {tester.test_user_id}")
+    
     # Test API root
     tester.test_api_root()
+    
+    print("\n" + "=" * 60)
+    print("🏥 HOSPITAL SYSTEM TESTS")
+    print("=" * 60)
     
     # Test getting all hospitals
     success, hospitals = tester.test_get_all_hospitals()
@@ -583,15 +589,63 @@ def main():
     # Test invalid hospital ID
     tester.test_invalid_hospital_id()
     
+    print("\n" + "=" * 60)
+    print("💊 MEDICINE SYSTEM TESTS")
+    print("=" * 60)
+    
+    # Test Medicine APIs
+    success, medicines = tester.test_get_all_medicines()
+    tester.test_get_medicine_categories()
+    tester.test_search_medicines()
+    
+    # Test getting specific medicine (if we have medicines)
+    if success and medicines and len(medicines) > 0:
+        first_medicine_id = medicines[0].get('id')
+        if first_medicine_id:
+            tester.test_medicine_id = first_medicine_id
+            tester.test_get_specific_medicine(first_medicine_id)
+    
+    print("\n" + "=" * 60)
+    print("📋 PRESCRIPTION SYSTEM TESTS")
+    print("=" * 60)
+    
+    # Test Prescription APIs
+    tester.test_create_prescription()
+    tester.test_get_user_prescriptions()
+    tester.test_get_specific_prescription()
+    tester.test_mark_prescription_used()
+    
+    print("\n" + "=" * 60)
+    print("🛒 SHOPPING CART SYSTEM TESTS")
+    print("=" * 60)
+    
+    # Test Shopping Cart APIs
+    tester.test_get_cart()
+    tester.test_add_to_cart()
+    tester.test_update_cart_item()
+    tester.test_remove_from_cart()
+    tester.test_clear_cart()
+    
+    print("\n" + "=" * 60)
+    print("📦 ORDER SYSTEM TESTS")
+    print("=" * 60)
+    
+    # Test Order APIs
+    tester.test_create_order()
+    tester.test_get_user_orders()
+    tester.test_get_specific_order()
+    tester.test_update_order_status()
+    
     # Print final results
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
     print(f"📊 FINAL RESULTS")
+    print("=" * 60)
     print(f"Tests Run: {tester.tests_run}")
     print(f"Tests Passed: {tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
     if tester.tests_passed == tester.tests_run:
-        print("🎉 All tests passed! Backend API is working correctly.")
+        print("🎉 All tests passed! Medicine System Backend API is working correctly.")
         return 0
     else:
         print(f"⚠️  {tester.tests_run - tester.tests_passed} tests failed.")
