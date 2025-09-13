@@ -552,6 +552,275 @@ async def get_hospital(hospital_id: str):
         raise HTTPException(status_code=404, detail="Hospital not found")
     return Hospital(**hospital)
 
+# Medicine API Routes
+@api_router.get("/medicines", response_model=List[Medicine])
+async def get_medicines(
+    category: Optional[str] = Query(None, description="Filter by category"),
+    search: Optional[str] = Query(None, description="Search medicines by name"),
+    prescription_required: Optional[bool] = Query(None, description="Filter by prescription requirement")
+):
+    """Get medicines with optional filters"""
+    query = {}
+    
+    if category:
+        query["category"] = category
+        
+    if prescription_required is not None:
+        query["prescriptionRequired"] = prescription_required
+        
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+            {"activeIngredients": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
+    
+    medicines = await db.medicines.find(query).to_list(100)
+    return [Medicine(**medicine) for medicine in medicines]
+
+@api_router.get("/medicines/categories")
+async def get_medicine_categories():
+    """Get all medicine categories"""
+    return [{"value": cat.value, "label": cat.value} for cat in MedicineCategory]
+
+@api_router.get("/medicines/{medicine_id}", response_model=Medicine)
+async def get_medicine(medicine_id: str):
+    """Get a specific medicine by ID"""
+    medicine = await db.medicines.find_one({"id": medicine_id})
+    if not medicine:
+        raise HTTPException(status_code=404, detail="Medicine not found")
+    return Medicine(**medicine)
+
+# Prescription API Routes
+@api_router.post("/prescriptions", response_model=Prescription)
+async def create_prescription(prescription: PrescriptionCreate):
+    """Create a new prescription"""
+    prescription_dict = prescription.dict()
+    prescription_dict["id"] = str(uuid.uuid4())
+    prescription_dict["createdAt"] = datetime.now()
+    prescription_dict["isUsed"] = False
+    
+    await db.prescriptions.insert_one(prescription_dict)
+    return Prescription(**prescription_dict)
+
+@api_router.get("/prescriptions/user/{user_id}", response_model=List[Prescription])
+async def get_user_prescriptions(user_id: str):
+    """Get all prescriptions for a user"""
+    prescriptions = await db.prescriptions.find({"userId": user_id}).to_list(100)
+    return [Prescription(**prescription) for prescription in prescriptions]
+
+@api_router.get("/prescriptions/{prescription_id}", response_model=Prescription)
+async def get_prescription(prescription_id: str):
+    """Get a specific prescription by ID"""
+    prescription = await db.prescriptions.find_one({"id": prescription_id})
+    if not prescription:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+    return Prescription(**prescription)
+
+@api_router.put("/prescriptions/{prescription_id}/use")
+async def mark_prescription_used(prescription_id: str):
+    """Mark a prescription as used"""
+    result = await db.prescriptions.update_one(
+        {"id": prescription_id},
+        {"$set": {"isUsed": True}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+    return {"message": "Prescription marked as used"}
+
+# Shopping Cart API Routes
+@api_router.get("/cart/{user_id}", response_model=Cart)
+async def get_cart(user_id: str):
+    """Get user's shopping cart"""
+    cart = await db.carts.find_one({"userId": user_id})
+    if not cart:
+        # Create empty cart if doesn't exist
+        cart_dict = {
+            "id": str(uuid.uuid4()),
+            "userId": user_id,
+            "items": [],
+            "totalAmount": 0.0,
+            "updatedAt": datetime.now()
+        }
+        await db.carts.insert_one(cart_dict)
+        return Cart(**cart_dict)
+    return Cart(**cart)
+
+@api_router.post("/cart/{user_id}/add")
+async def add_to_cart(user_id: str, item: CartItem):
+    """Add item to cart"""
+    cart = await db.carts.find_one({"userId": user_id})
+    
+    if not cart:
+        # Create new cart
+        cart_dict = {
+            "id": str(uuid.uuid4()),
+            "userId": user_id,
+            "items": [item.dict()],
+            "totalAmount": item.price * item.quantity,
+            "updatedAt": datetime.now()
+        }
+        await db.carts.insert_one(cart_dict)
+    else:
+        # Update existing cart
+        items = cart.get("items", [])
+        existing_item = None
+        
+        for i, existing in enumerate(items):
+            if existing["medicineId"] == item.medicineId:
+                existing_item = i
+                break
+        
+        if existing_item is not None:
+            # Update quantity if item exists
+            items[existing_item]["quantity"] += item.quantity
+        else:
+            # Add new item
+            items.append(item.dict())
+        
+        # Calculate total
+        total_amount = sum(i["price"] * i["quantity"] for i in items)
+        
+        await db.carts.update_one(
+            {"userId": user_id},
+            {
+                "$set": {
+                    "items": items,
+                    "totalAmount": total_amount,
+                    "updatedAt": datetime.now()
+                }
+            }
+        )
+    
+    return {"message": "Item added to cart"}
+
+@api_router.put("/cart/{user_id}/update")
+async def update_cart_item(user_id: str, medicine_id: str, quantity: int):
+    """Update cart item quantity"""
+    cart = await db.carts.find_one({"userId": user_id})
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+    
+    items = cart.get("items", [])
+    for item in items:
+        if item["medicineId"] == medicine_id:
+            if quantity <= 0:
+                items.remove(item)
+            else:
+                item["quantity"] = quantity
+            break
+    
+    # Calculate total
+    total_amount = sum(i["price"] * i["quantity"] for i in items)
+    
+    await db.carts.update_one(
+        {"userId": user_id},
+        {
+            "$set": {
+                "items": items,
+                "totalAmount": total_amount,
+                "updatedAt": datetime.now()
+            }
+        }
+    )
+    
+    return {"message": "Cart updated"}
+
+@api_router.delete("/cart/{user_id}/remove/{medicine_id}")
+async def remove_from_cart(user_id: str, medicine_id: str):
+    """Remove item from cart"""
+    cart = await db.carts.find_one({"userId": user_id})
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+    
+    items = cart.get("items", [])
+    items = [item for item in items if item["medicineId"] != medicine_id]
+    
+    # Calculate total
+    total_amount = sum(i["price"] * i["quantity"] for i in items)
+    
+    await db.carts.update_one(
+        {"userId": user_id},
+        {
+            "$set": {
+                "items": items,
+                "totalAmount": total_amount,
+                "updatedAt": datetime.now()
+            }
+        }
+    )
+    
+    return {"message": "Item removed from cart"}
+
+@api_router.delete("/cart/{user_id}/clear")
+async def clear_cart(user_id: str):
+    """Clear user's cart"""
+    await db.carts.update_one(
+        {"userId": user_id},
+        {
+            "$set": {
+                "items": [],
+                "totalAmount": 0.0,
+                "updatedAt": datetime.now()
+            }
+        }
+    )
+    return {"message": "Cart cleared"}
+
+# Order API Routes
+@api_router.post("/orders", response_model=Order)
+async def create_order(order: OrderCreate):
+    """Create a new order"""
+    order_dict = order.dict()
+    order_dict["id"] = str(uuid.uuid4())
+    order_dict["orderDate"] = datetime.now()
+    order_dict["status"] = OrderStatus.PENDING
+    
+    # Set estimated delivery (2-3 days from now)
+    from datetime import timedelta
+    order_dict["estimatedDelivery"] = datetime.now() + timedelta(days=2)
+    
+    await db.orders.insert_one(order_dict)
+    
+    # Clear user's cart after order
+    await db.carts.update_one(
+        {"userId": order.userId},
+        {
+            "$set": {
+                "items": [],
+                "totalAmount": 0.0,
+                "updatedAt": datetime.now()
+            }
+        }
+    )
+    
+    return Order(**order_dict)
+
+@api_router.get("/orders/user/{user_id}", response_model=List[Order])
+async def get_user_orders(user_id: str):
+    """Get all orders for a user"""
+    orders = await db.orders.find({"userId": user_id}).sort("orderDate", -1).to_list(100)
+    return [Order(**order) for order in orders]
+
+@api_router.get("/orders/{order_id}", response_model=Order)
+async def get_order(order_id: str):
+    """Get a specific order by ID"""
+    order = await db.orders.find_one({"id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return Order(**order)
+
+@api_router.put("/orders/{order_id}/status")
+async def update_order_status(order_id: str, status: OrderStatus):
+    """Update order status"""
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$set": {"status": status.value}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": f"Order status updated to {status.value}"}
+
 # Initialize data on startup
 @app.on_event("startup")
 async def startup_event():
