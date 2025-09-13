@@ -291,6 +291,227 @@ async def init_dummy_data():
         await db.hospitals.insert_many(dummy_hospitals)
         logger.info("Dummy hospital data initialized")
 
+# Initialize dummy medicine data
+async def init_medicine_data():
+    """Initialize the database with dummy medicine data"""
+    existing_count = await db.medicines.count_documents({})
+    if existing_count == 0:
+        dummy_medicines = [
+            # Pain Relief
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Paracetamol 500mg",
+                "category": "Pain Relief",
+                "type": "Over-the-Counter",
+                "description": "Effective pain reliever and fever reducer",
+                "price": 15.99,
+                "dosage": "1-2 tablets every 4-6 hours, max 8 tablets/day",
+                "sideEffects": ["Nausea", "Stomach upset (rare)"],
+                "activeIngredients": ["Paracetamol 500mg"],
+                "manufacturer": "HealthCorp",
+                "expiryDate": "2026-12-31",
+                "inStock": 100,
+                "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300",
+                "prescriptionRequired": False,
+                "minAge": 12,
+                "warnings": ["Do not exceed recommended dose", "Avoid alcohol"],
+                "usage": "Take with or after food",
+                "createdAt": datetime.now()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Ibuprofen 400mg",
+                "category": "Pain Relief",
+                "type": "Over-the-Counter",
+                "description": "Anti-inflammatory pain reliever",
+                "price": 22.50,
+                "dosage": "1 tablet every 6-8 hours with food",
+                "sideEffects": ["Stomach irritation", "Dizziness", "Headache"],
+                "activeIngredients": ["Ibuprofen 400mg"],
+                "manufacturer": "PharmaMax",
+                "expiryDate": "2025-10-15",
+                "inStock": 75,
+                "imageUrl": "https://images.unsplash.com/photo-1550572017-dda13fca1095?w=300",
+                "prescriptionRequired": False,
+                "minAge": 12,
+                "warnings": ["Take with food", "Not suitable for pregnant women"],
+                "usage": "Best taken with meals",
+                "createdAt": datetime.now()
+            },
+            
+            # Antibiotics
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Amoxicillin 500mg",
+                "category": "Antibiotics",
+                "type": "Prescription Required",
+                "description": "Broad-spectrum antibiotic for bacterial infections",
+                "price": 45.00,
+                "dosage": "1 capsule 3 times daily for 7-10 days",
+                "sideEffects": ["Nausea", "Diarrhea", "Skin rash", "Allergic reactions"],
+                "activeIngredients": ["Amoxicillin 500mg"],
+                "manufacturer": "BioMed Solutions",
+                "expiryDate": "2025-08-20",
+                "inStock": 50,
+                "imageUrl": "https://images.unsplash.com/photo-1576671081837-49000212a370?w=300",
+                "prescriptionRequired": True,
+                "warnings": ["Complete full course", "Inform doctor of allergies"],
+                "usage": "Take with water, can be taken with or without food",
+                "createdAt": datetime.now()
+            },
+            
+            # Vitamins
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Vitamin D3 1000 IU",
+                "category": "Vitamins",
+                "type": "Over-the-Counter",
+                "description": "Essential vitamin for bone health and immunity",
+                "price": 18.99,
+                "dosage": "1 tablet daily with meal",
+                "sideEffects": ["Rare: nausea, constipation"],
+                "activeIngredients": ["Cholecalciferol 1000 IU"],
+                "manufacturer": "NutriCare",
+                "expiryDate": "2026-05-30",
+                "inStock": 120,
+                "imageUrl": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300",
+                "prescriptionRequired": False,
+                "warnings": ["Store in cool, dry place"],
+                "usage": "Take with fat-containing meal for better absorption",
+                "createdAt": datetime.now()
+            },
+            
+            # Diabetes
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Metformin 500mg",
+                "category": "Diabetes",
+                "type": "Prescription Required",
+                "description": "First-line treatment for type 2 diabetes",
+                "price": 35.75,
+                "dosage": "1 tablet twice daily with meals",
+                "sideEffects": ["Nausea", "Diarrhea", "Metallic taste", "Lactic acidosis (rare)"],
+                "activeIngredients": ["Metformin HCl 500mg"],
+                "manufacturer": "DiabetCare Ltd",
+                "expiryDate": "2025-12-15",
+                "inStock": 80,
+                "imageUrl": "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300",
+                "prescriptionRequired": True,
+                "warnings": ["Monitor kidney function", "Avoid alcohol"],
+                "usage": "Take with meals to reduce stomach upset",
+                "createdAt": datetime.now()
+            },
+            
+            # Heart & Blood Pressure
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Amlodipine 5mg",
+                "category": "Heart & Blood Pressure",
+                "type": "Prescription Required",
+                "description": "Calcium channel blocker for high blood pressure",
+                "price": 28.50,
+                "dosage": "1 tablet once daily",
+                "sideEffects": ["Ankle swelling", "Dizziness", "Flushing", "Fatigue"],
+                "activeIngredients": ["Amlodipine besylate 5mg"],
+                "manufacturer": "CardioMed",
+                "expiryDate": "2025-09-10",
+                "inStock": 60,
+                "imageUrl": "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300",
+                "prescriptionRequired": True,
+                "warnings": ["Monitor blood pressure regularly", "Rise slowly from sitting"],
+                "usage": "Can be taken with or without food",
+                "createdAt": datetime.now()
+            },
+            
+            # Digestive Health
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Omeprazole 20mg",
+                "category": "Digestive Health",
+                "type": "Over-the-Counter",
+                "description": "Proton pump inhibitor for acid reflux and heartburn",
+                "price": 19.99,
+                "dosage": "1 capsule daily before breakfast",
+                "sideEffects": ["Headache", "Nausea", "Abdominal pain", "Constipation"],
+                "activeIngredients": ["Omeprazole 20mg"],
+                "manufacturer": "GastroHealth",
+                "expiryDate": "2026-03-25",
+                "inStock": 90,
+                "imageUrl": "https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=300",
+                "prescriptionRequired": False,
+                "minAge": 18,
+                "warnings": ["Not for immediate relief", "Consult doctor if symptoms persist"],
+                "usage": "Take 30 minutes before eating",
+                "createdAt": datetime.now()
+            },
+            
+            # Respiratory
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Salbutamol Inhaler",
+                "category": "Respiratory",
+                "type": "Prescription Required",
+                "description": "Fast-acting bronchodilator for asthma and COPD",
+                "price": 55.00,
+                "dosage": "1-2 puffs as needed, max 8 puffs/day",
+                "sideEffects": ["Tremor", "Rapid heartbeat", "Nervousness", "Headache"],
+                "activeIngredients": ["Salbutamol 100mcg/puff"],
+                "manufacturer": "RespiCare",
+                "expiryDate": "2025-07-30",
+                "inStock": 40,
+                "imageUrl": "https://images.unsplash.com/photo-1584362917165-526f39dcc19c?w=300",
+                "prescriptionRequired": True,
+                "warnings": ["Shake before use", "Rinse mouth after use"],
+                "usage": "Inhale slowly and deeply",
+                "createdAt": datetime.now()
+            },
+            
+            # First Aid
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Antiseptic Cream",
+                "category": "First Aid",
+                "type": "Over-the-Counter",
+                "description": "Prevents infection in minor cuts and wounds",
+                "price": 12.99,
+                "dosage": "Apply thin layer 2-3 times daily",
+                "sideEffects": ["Mild skin irritation (rare)"],
+                "activeIngredients": ["Chlorhexidine 0.1%"],
+                "manufacturer": "FirstAid Plus",
+                "expiryDate": "2026-01-15",
+                "inStock": 150,
+                "imageUrl": "https://images.unsplash.com/photo-1556909114-d8cb3b2de43c?w=300",
+                "prescriptionRequired": False,
+                "warnings": ["For external use only", "Avoid contact with eyes"],
+                "usage": "Clean wound before application",
+                "createdAt": datetime.now()
+            },
+            
+            # Mental Health
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Sertraline 50mg",
+                "category": "Mental Health",
+                "type": "Prescription Required",
+                "description": "SSRI antidepressant for depression and anxiety",
+                "price": 42.00,
+                "dosage": "1 tablet daily, preferably in morning",
+                "sideEffects": ["Nausea", "Insomnia", "Dizziness", "Sexual dysfunction"],
+                "activeIngredients": ["Sertraline HCl 50mg"],
+                "manufacturer": "MindWell Pharma",
+                "expiryDate": "2025-11-20",
+                "inStock": 30,
+                "imageUrl": "https://images.unsplash.com/photo-1628771065485-a501d4e5b29c?w=300",
+                "prescriptionRequired": True,
+                "warnings": ["May take 4-6 weeks to show effect", "Do not stop suddenly"],
+                "usage": "Take with food to reduce nausea",
+                "createdAt": datetime.now()
+            }
+        ]
+        
+        await db.medicines.insert_many(dummy_medicines)
+        logger.info("Dummy medicine data initialized")
+
 # API Routes
 @api_router.get("/")
 async def root():
