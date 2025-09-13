@@ -446,6 +446,18 @@ class HospotAPITester:
         
         return success
 
+    def test_api_root(self):
+        """Test API root endpoint"""
+        success, response = self.run_test(
+            "API Root",
+            "GET", 
+            "",
+            200
+        )
+        if success and isinstance(response, dict):
+            print(f"   Message: {response.get('message', 'No message found')}")
+        return success
+
     def test_get_all_hospitals(self):
         """Test getting all hospitals"""
         success, response = self.run_test(
