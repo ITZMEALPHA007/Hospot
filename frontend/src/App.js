@@ -1467,6 +1467,445 @@ const HospitalProgressPage = () => {
   );
 };
 
+// Medicine Components
+const MedicinesPage = () => {
+  const [medicines, setMedicines] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [prescriptionRequired, setPrescriptionRequired] = useState('');
+  const navigate = useNavigate();
+
+  const fetchMedicines = async (filters = {}) => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.category) queryParams.append('category', filters.category);
+      if (filters.prescriptionRequired !== '') queryParams.append('prescription_required', filters.prescriptionRequired);
+
+      const url = `${API}/medicines${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      const response = await axios.get(url);
+      setMedicines(response.data);
+    } catch (error) {
+      console.error('Error fetching medicines:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/medicines/categories`);
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMedicines();
+    fetchCategories();
+  }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchMedicines({
+      search: searchTerm,
+      category: selectedCategory,
+      prescriptionRequired: prescriptionRequired
+    });
+  };
+
+  const handleFilter = () => {
+    fetchMedicines({
+      search: searchTerm,
+      category: selectedCategory,
+      prescriptionRequired: prescriptionRequired
+    });
+  };
+
+  const addToCart = async (medicine) => {
+    try {
+      const { user } = JSON.parse(localStorage.getItem('hospot_user') || '{}');
+      if (!user) return;
+
+      const cartItem = {
+        medicineId: medicine.id,
+        medicineName: medicine.name,
+        price: medicine.price,
+        quantity: 1
+      };
+
+      await axios.post(`${API}/cart/${user.email}/add`, cartItem);
+      alert(`${medicine.name} added to cart!`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main className="container mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Medicine Store</h2>
+          <p className="text-gray-600 mb-6">Browse and order medicines online with prescription support</p>
+          
+          {/* Search and Filters */}
+          <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+            <form onSubmit={handleSearch} className="grid md:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search medicines..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={prescriptionRequired} onValueChange={setPrescriptionRequired}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Medicines" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Medicines</SelectItem>
+                  <SelectItem value="false">Over-the-Counter</SelectItem>
+                  <SelectItem value="true">Prescription Required</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button 
+                type="submit" 
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Search
+              </Button>
+            </form>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="grid gap-6">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Loading medicines...</p>
+            </div>
+          ) : medicines.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No medicines found. Try adjusting your search criteria.</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {medicines.map((medicine) => (
+                <Card key={medicine.id} className="hover:shadow-lg transition-all duration-200">
+                  <CardContent className="p-4">
+                    {medicine.imageUrl && (
+                      <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                        <img 
+                          src={medicine.imageUrl} 
+                          alt={medicine.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-1">{medicine.name}</h3>
+                        <p className="text-sm text-gray-600 line-clamp-2">{medicine.description}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-blue-600">${medicine.price}</span>
+                        <Badge 
+                          variant="outline" 
+                          className={medicine.prescriptionRequired ? 'border-red-500 text-red-600' : 'border-green-500 text-green-600'}
+                        >
+                          {medicine.type}
+                        </Badge>
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        <p><strong>Category:</strong> {medicine.category}</p>
+                        <p><strong>Manufacturer:</strong> {medicine.manufacturer}</p>
+                        <p><strong>Stock:</strong> {medicine.inStock} available</p>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => navigate(`/medicine/${medicine.id}`)}
+                          className="flex-1"
+                        >
+                          View Details
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => addToCart(medicine)}
+                          disabled={medicine.inStock === 0}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// Medicine Detail Page
+const MedicineDetailPage = () => {
+  const { medicineId } = useParams();
+  const [medicine, setMedicine] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMedicine = async () => {
+      try {
+        const response = await axios.get(`${API}/medicines/${medicineId}`);
+        setMedicine(response.data);
+      } catch (error) {
+        console.error('Error fetching medicine:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMedicine();
+  }, [medicineId]);
+
+  const addToCart = async () => {
+    try {
+      const { user } = JSON.parse(localStorage.getItem('hospot_user') || '{}');
+      if (!user) return;
+
+      const cartItem = {
+        medicineId: medicine.id,
+        medicineName: medicine.name,
+        price: medicine.price,
+        quantity: quantity
+      };
+
+      await axios.post(`${API}/cart/${user.email}/add`, cartItem);
+      alert(`${medicine.name} added to cart!`);
+      navigate('/cart');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading medicine details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!medicine) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Medicine Not Found</h2>
+          <Button onClick={() => navigate('/medicines')}>Back to Medicines</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header showHomeButton={true} />
+
+      <main className="container mx-auto px-4 py-8">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/medicines')}
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Medicines
+        </Button>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Image Section */}
+          <div className="space-y-4">
+            {medicine.imageUrl && (
+              <div className="aspect-square bg-white rounded-lg p-8 shadow-sm">
+                <img 
+                  src={medicine.imageUrl} 
+                  alt={medicine.name}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Details Section */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{medicine.name}</h1>
+              <p className="text-gray-600 text-lg">{medicine.description}</p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-3xl font-bold text-blue-600">${medicine.price}</span>
+              <Badge 
+                variant="outline" 
+                className={medicine.prescriptionRequired ? 'border-red-500 text-red-600' : 'border-green-500 text-green-600'}
+              >
+                {medicine.type}
+              </Badge>
+            </div>
+
+            {/* Medicine Info */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Medicine Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div><strong>Category:</strong> {medicine.category}</div>
+                  <div><strong>Manufacturer:</strong> {medicine.manufacturer}</div>
+                  <div><strong>Dosage:</strong> {medicine.dosage}</div>
+                  <div><strong>Stock:</strong> {medicine.inStock} available</div>
+                  <div><strong>Expiry:</strong> {medicine.expiryDate}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Active Ingredients</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc list-inside space-y-1">
+                    {medicine.activeIngredients.map((ingredient, index) => (
+                      <li key={index} className="text-sm">{ingredient}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Usage Instructions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Usage Instructions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700">{medicine.usage}</p>
+              </CardContent>
+            </Card>
+
+            {/* Side Effects */}
+            {medicine.sideEffects.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-yellow-700">Possible Side Effects</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc list-inside space-y-1">
+                    {medicine.sideEffects.map((effect, index) => (
+                      <li key={index} className="text-sm text-yellow-700">{effect}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Warnings */}
+            {medicine.warnings.length > 0 && (
+              <Card className="border-red-200">
+                <CardHeader>
+                  <CardTitle className="text-lg text-red-700">Warnings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc list-inside space-y-1">
+                    {medicine.warnings.map((warning, index) => (
+                      <li key={index} className="text-sm text-red-700">{warning}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Add to Cart */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="font-medium">Quantity:</label>
+                  <div className="flex items-center space-x-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    >
+                      -
+                    </Button>
+                    <span className="w-12 text-center">{quantity}</span>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setQuantity(Math.min(medicine.inStock, quantity + 1))}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={addToCart}
+                  disabled={medicine.inStock === 0}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Add to Cart - ${(medicine.price * quantity).toFixed(2)}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
 // Main App Component
 function App() {
   return (
