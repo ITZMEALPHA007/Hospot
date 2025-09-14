@@ -175,6 +175,60 @@ class HospotAPITester:
         
         return success1 and success2 and success3
 
+    def test_category_filtering(self):
+        """Test filtering medicines by specific categories"""
+        categories_to_test = ["Pain Relief", "Vitamins", "Allergy & Cold", "Skin Care", "Child Health"]
+        all_success = True
+        
+        for category in categories_to_test:
+            success, response = self.run_test(
+                f"Filter Medicines by Category ({category})",
+                "GET",
+                "medicines",
+                200,
+                params={"category": category}
+            )
+            
+            if success and isinstance(response, list):
+                category_medicines = [m for m in response if m.get('category') == category]
+                print(f"   Found {len(category_medicines)} {category} medicines")
+                if len(category_medicines) == 0:
+                    print(f"⚠️  No medicines found for category: {category}")
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_prescription_filtering(self):
+        """Test filtering medicines by prescription requirement"""
+        # Test OTC medicines
+        success1, response1 = self.run_test(
+            "Filter Medicines by Prescription (OTC)",
+            "GET",
+            "medicines",
+            200,
+            params={"prescription_required": False}
+        )
+        
+        if success1 and isinstance(response1, list):
+            otc_medicines = [m for m in response1 if not m.get('prescriptionRequired', True)]
+            print(f"   Found {len(otc_medicines)} Over-the-Counter medicines")
+        
+        # Test Prescription Required medicines
+        success2, response2 = self.run_test(
+            "Filter Medicines by Prescription (Required)",
+            "GET",
+            "medicines",
+            200,
+            params={"prescription_required": True}
+        )
+        
+        if success2 and isinstance(response2, list):
+            prescription_medicines = [m for m in response2 if m.get('prescriptionRequired', False)]
+            print(f"   Found {len(prescription_medicines)} Prescription Required medicines")
+        
+        return success1 and success2
+
     def test_get_specific_medicine(self, medicine_id):
         """Test getting a specific medicine by ID"""
         success, response = self.run_test(
