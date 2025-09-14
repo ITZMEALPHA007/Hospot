@@ -8,10 +8,58 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Search, ShoppingCart, ArrowLeft, Upload, FileText, Trash2, Plus, Minus, Package, CreditCard, Truck, Activity, Bed, Pill } from "lucide-react";
+import { Search, ShoppingCart, ArrowLeft, Upload, FileText, Trash2, Plus, Minus, Package, CreditCard, Truck, Activity, Bed, Pill, Home } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Bottom Navigation Component
+const BottomNavBar = () => {
+  const navigate = useNavigate();
+  const location = window.location;
+  const currentPath = location.pathname;
+
+  const navItems = [
+    { path: '/home', icon: Home, label: 'Hospitals', color: 'text-blue-600' },
+    { path: '/medicines', icon: Pill, label: 'Medicines', color: 'text-green-600' },
+    { path: '/prescriptions', icon: FileText, label: 'Prescriptions', color: 'text-purple-600' },
+    { path: '/cart', icon: ShoppingCart, label: 'Cart', color: 'text-orange-600' },
+    { path: '/orders', icon: Package, label: 'Orders', color: 'text-red-600' },
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
+      <div className="grid grid-cols-5 py-2">
+        {navItems.map((item, index) => {
+          const IconComponent = item.icon;
+          const isActive = currentPath === item.path;
+          
+          return (
+            <button
+              key={index}
+              onClick={() => navigate(item.path)}
+              className={`flex flex-col items-center justify-center py-2 px-1 transition-all duration-200 ${
+                isActive 
+                  ? `${item.color} bg-gray-50` 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <IconComponent 
+                className={`h-5 w-5 mb-1 ${isActive ? 'scale-110' : ''} transition-transform duration-200`} 
+              />
+              <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
+                {item.label}
+              </span>
+              {isActive && (
+                <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-1 ${item.color.replace('text-', 'bg-')} rounded-b-full`}></div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 // Header Component (simplified version for medicine components)
 const Header = () => {
@@ -36,7 +84,7 @@ const Header = () => {
           <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
         </div>
 
-        {/* Navigation Menu */}
+        {/* Navigation Menu - Only Hospitals for desktop */}
         <nav className="hidden md:flex items-center space-x-6">
           <Button 
             variant="ghost"
@@ -45,38 +93,6 @@ const Header = () => {
           >
             <Bed className="h-4 w-4 mr-2" />
             Hospitals
-          </Button>
-          <Button 
-            variant="ghost"
-            onClick={() => navigate('/medicines')}
-            className="text-gray-700 hover:text-blue-600"
-          >
-            <Pill className="h-4 w-4 mr-2" />
-            Medicines
-          </Button>
-          <Button 
-            variant="ghost"
-            onClick={() => navigate('/prescriptions')}
-            className="text-gray-700 hover:text-blue-600"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Prescriptions
-          </Button>
-          <Button 
-            variant="ghost"
-            onClick={() => navigate('/cart')}
-            className="text-gray-700 hover:text-blue-600 relative"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Cart
-          </Button>
-          <Button 
-            variant="ghost"
-            onClick={() => navigate('/orders')}
-            className="text-gray-700 hover:text-blue-600"
-          >
-            <Package className="h-4 w-4 mr-2" />
-            Orders
           </Button>
         </nav>
         
@@ -92,6 +108,190 @@ const Header = () => {
         </div>
       </div>
     </header>
+  );
+};
+
+// Sample Medicine Data
+const sampleMedicines = [
+  {
+    id: 'med-1',
+    name: 'Paracetamol 500mg',
+    category: 'Pain Relief',
+    type: 'Tablet',
+    price: 12.99,
+    dosage: '500mg',
+    description: 'Effective pain relief and fever reducer. Suitable for adults and children over 12 years.',
+    prescriptionRequired: false,
+    inStock: true,
+    manufacturer: 'HealthCorp'
+  },
+  {
+    id: 'med-2',
+    name: 'Amoxicillin 250mg',
+    category: 'Antibiotics',
+    type: 'Capsule',
+    price: 24.50,
+    dosage: '250mg',
+    description: 'Broad-spectrum antibiotic for bacterial infections. Complete the full course as prescribed.',
+    prescriptionRequired: true,
+    inStock: true,
+    manufacturer: 'MediPharm'
+  },
+  {
+    id: 'med-3',
+    name: 'Ibuprofen 400mg',
+    category: 'Anti-inflammatory',
+    type: 'Tablet',
+    price: 18.75,
+    dosage: '400mg',
+    description: 'Non-steroidal anti-inflammatory drug (NSAID) for pain, inflammation, and fever.',
+    prescriptionRequired: false,
+    inStock: true,
+    manufacturer: 'PharmaCare'
+  },
+  {
+    id: 'med-4',
+    name: 'Lisinopril 10mg',
+    category: 'Blood Pressure',
+    type: 'Tablet',
+    price: 32.00,
+    dosage: '10mg',
+    description: 'ACE inhibitor for high blood pressure and heart failure management.',
+    prescriptionRequired: true,
+    inStock: true,
+    manufacturer: 'CardioMed'
+  },
+  {
+    id: 'med-5',
+    name: 'Cetirizine 10mg',
+    category: 'Allergy',
+    type: 'Tablet',
+    price: 15.25,
+    dosage: '10mg',
+    description: '24-hour allergy relief. Non-drowsy antihistamine for seasonal allergies.',
+    prescriptionRequired: false,
+    inStock: true,
+    manufacturer: 'AllergyFree'
+  },
+  {
+    id: 'med-6',
+    name: 'Omeprazole 20mg',
+    category: 'Gastric',
+    type: 'Capsule',
+    price: 28.99,
+    dosage: '20mg',
+    description: 'Proton pump inhibitor for acid reflux and stomach ulcers.',
+    prescriptionRequired: true,
+    inStock: false,
+    manufacturer: 'GastroHealth'
+  }
+];
+
+// Medicine Cards Component
+const MedicineCards = () => {
+  const navigate = useNavigate();
+
+  const addToCart = async (medicine) => {
+    try {
+      const savedUser = localStorage.getItem('hospot_user');
+      if (!savedUser) {
+        alert('Please login to add items to cart');
+        return;
+      }
+
+      const { user } = JSON.parse(savedUser);
+      const cartItem = {
+        medicineId: medicine.id,
+        medicineName: medicine.name,
+        price: medicine.price,
+        quantity: 1
+      };
+
+      await axios.post(`${API}/cart/${user.email}/add`, cartItem);
+      alert(`${medicine.name} added to cart!`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Popular Medicines</h2>
+          <p className="text-gray-600 mb-6">Browse our most popular medicines with competitive prices</p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sampleMedicines.map((medicine) => (
+            <Card key={medicine.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{medicine.name}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{medicine.category}</p>
+                    <Badge 
+                      variant={medicine.prescriptionRequired ? "destructive" : "secondary"}
+                      className="text-xs"
+                    >
+                      {medicine.prescriptionRequired ? "Prescription Required" : "Over-the-Counter"}
+                    </Badge>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-blue-600">${medicine.price}</div>
+                    <div className="text-xs text-gray-500">{medicine.dosage}</div>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{medicine.description}</p>
+                
+                <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs mb-4 ${
+                  medicine.inStock 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {medicine.inStock ? 'In Stock' : 'Out of Stock'}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => navigate(`/medicine/${medicine.id}`)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    View Details
+                  </Button>
+                  <Button
+                    onClick={() => addToCart(medicine)}
+                    disabled={!medicine.inStock}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white px-4"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-1" />
+                    ${medicine.price}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Button 
+            onClick={() => navigate('/medicines')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
+          >
+            View All Medicines
+          </Button>
+        </div>
+      </main>
+      
+      <BottomNavBar />
+    </div>
   );
 };
 
@@ -128,7 +328,9 @@ export const PrescriptionsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Header />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -235,6 +437,8 @@ export const PrescriptionsPage = () => {
           onSuccess={fetchPrescriptions}
         />
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 };
@@ -321,9 +525,9 @@ const PrescriptionUploadForm = ({ isOpen, onClose, onSuccess }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Upload Prescription</DialogTitle>
+          <DialogTitle>Add New Prescription</DialogTitle>
           <DialogDescription>
-            Add a new prescription to your records
+            Upload your prescription details to order medicines easily
           </DialogDescription>
         </DialogHeader>
 
@@ -355,71 +559,63 @@ const PrescriptionUploadForm = ({ isOpen, onClose, onSuccess }) => {
               type="date"
               value={formData.prescriptionDate}
               onChange={(e) => handleInputChange('prescriptionDate', e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
               required
             />
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-3">
-              <label className="text-sm font-medium text-gray-700">Prescribed Medicines *</label>
-              <Button type="button" variant="outline" size="sm" onClick={addMedicine}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Medicine
-              </Button>
-            </div>
-            
-            {formData.medicines.map((medicine, index) => (
-              <div key={index} className="border rounded-lg p-4 mb-3">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-medium">Medicine {index + 1}</h4>
-                  {formData.medicines.length > 1 && (
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => removeMedicine(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="grid md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Medicine Name</label>
+            <label className="text-sm font-medium text-gray-700 mb-3 block">Medicines *</label>
+            <div className="space-y-4">
+              {formData.medicines.map((medicine, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="grid md:grid-cols-3 gap-3">
                     <Input
+                      placeholder="Medicine Name"
                       value={medicine.medicineName}
                       onChange={(e) => handleMedicineChange(index, 'medicineName', e.target.value)}
-                      placeholder="Paracetamol 500mg"
                       required
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Dosage</label>
                     <Input
+                      placeholder="Dosage (e.g., 500mg)"
                       value={medicine.dosage}
                       onChange={(e) => handleMedicineChange(index, 'dosage', e.target.value)}
-                      placeholder="1 tablet twice daily"
                       required
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Duration</label>
-                    <Input
-                      value={medicine.duration}
-                      onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
-                      placeholder="7 days"
-                      required
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Duration (e.g., 7 days)"
+                        value={medicine.duration}
+                        onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
+                        required
+                      />
+                      {formData.medicines.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeMedicine(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addMedicine}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another Medicine
+              </Button>
+            </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Additional Notes</label>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
             <Textarea
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
@@ -429,15 +625,16 @@ const PrescriptionUploadForm = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Prescription Image URL (Optional)</label>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Prescription Image URL</label>
             <Input
+              type="url"
               value={formData.imageUrl}
               onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-              placeholder="https://example.com/prescription-image.jpg"
+              placeholder="https://example.com/prescription.jpg"
             />
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex justify-end space-x-3">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -455,7 +652,7 @@ const PrescriptionUploadForm = ({ isOpen, onClose, onSuccess }) => {
   );
 };
 
-// Shopping Cart Page Component
+// Cart Page Component
 export const CartPage = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -482,21 +679,23 @@ export const CartPage = () => {
   }, []);
 
   const updateQuantity = async (medicineId, newQuantity) => {
+    if (newQuantity < 1) {
+      removeItem(medicineId);
+      return;
+    }
+
     try {
       const savedUser = localStorage.getItem('hospot_user');
       if (!savedUser) return;
       
       const { user } = JSON.parse(savedUser);
-      
-      if (newQuantity <= 0) {
-        await axios.delete(`${API}/cart/${user.email}/remove/${medicineId}`);
-      } else {
-        await axios.put(`${API}/cart/${user.email}/update?medicine_id=${medicineId}&quantity=${newQuantity}`);
-      }
-      
+      await axios.put(`${API}/cart/${user.email}/update`, {
+        medicineId,
+        quantity: newQuantity
+      });
       fetchCart();
     } catch (error) {
-      console.error('Error updating cart:', error);
+      console.error('Error updating quantity:', error);
     }
   };
 
@@ -528,7 +727,7 @@ export const CartPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 pb-16 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4">Loading cart...</p>
@@ -538,7 +737,9 @@ export const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Header />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -674,6 +875,8 @@ export const CartPage = () => {
           </div>
         )}
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 };
@@ -759,7 +962,7 @@ export const CheckoutPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 pb-16 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4">Loading checkout...</p>
@@ -770,7 +973,7 @@ export const CheckoutPage = () => {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 pb-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
           <Button onClick={() => navigate('/medicines')}>Browse Medicines</Button>
@@ -780,7 +983,9 @@ export const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Header />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Checkout</h2>
@@ -801,7 +1006,7 @@ export const CheckoutPage = () => {
                     <Textarea
                       value={orderData.deliveryAddress}
                       onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-                      placeholder="Enter your complete delivery address"
+                      placeholder="Enter your complete delivery address..."
                       rows={3}
                       required
                     />
@@ -825,15 +1030,15 @@ export const CheckoutPage = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cash_on_delivery">Cash on Delivery (COD)</SelectItem>
-                        <SelectItem value="card">Credit/Debit Card (Mock)</SelectItem>
-                        <SelectItem value="upi">UPI Payment (Mock)</SelectItem>
+                        <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
+                        <SelectItem value="credit_card">Credit Card</SelectItem>
+                        <SelectItem value="digital_wallet">Digital Wallet</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Additional Notes</label>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Special Instructions</label>
                     <Textarea
                       value={orderData.notes}
                       onChange={(e) => handleInputChange('notes', e.target.value)}
@@ -843,7 +1048,7 @@ export const CheckoutPage = () => {
                   </div>
 
                   <Button 
-                    type="submit"
+                    type="submit" 
                     disabled={isSubmitting}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
                   >
@@ -856,33 +1061,35 @@ export const CheckoutPage = () => {
 
           {/* Order Summary */}
           <div>
-            <Card>
+            <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {cart.items.map((item) => (
-                  <div key={item.medicineId} className="flex justify-between items-center py-2 border-b">
-                    <div>
-                      <p className="font-medium">{item.medicineName}</p>
-                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+              <CardContent>
+                <div className="space-y-4">
+                  {cart.items.map((item) => (
+                    <div key={item.medicineId} className="flex justify-between items-center py-2 border-b">
+                      <div>
+                        <p className="font-medium">{item.medicineName}</p>
+                        <p className="text-sm text-gray-600">Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
+                      </div>
+                      <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
                     </div>
-                    <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
-                  </div>
-                ))}
-                
-                <div className="space-y-2 pt-4">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${cart.totalAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Delivery Fee</span>
-                    <span>$5.99</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total</span>
-                    <span>${(cart.totalAmount + 5.99).toFixed(2)}</span>
+                  ))}
+                  
+                  <div className="space-y-2 pt-4">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>${cart.totalAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Fee</span>
+                      <span>$5.99</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <span>Total</span>
+                      <span>${(cart.totalAmount + 5.99).toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -890,6 +1097,8 @@ export const CheckoutPage = () => {
           </div>
         </div>
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 };
@@ -924,32 +1133,22 @@ export const OrdersPage = () => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'preparing': return 'bg-purple-100 text-purple-800';
-      case 'out_for_delivery': return 'bg-orange-100 text-orange-800';
+      case 'preparing': return 'bg-orange-100 text-orange-800';
+      case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'pending': return 'Pending';
-      case 'confirmed': return 'Confirmed';
-      case 'preparing': return 'Preparing';
-      case 'out_for_delivery': return 'Out for Delivery';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
-      default: return status;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Header />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">My Orders</h2>
-          <p className="text-gray-600">Track your medicine orders</p>
+          <p className="text-gray-600">Track and manage your medicine orders</p>
         </div>
 
         {loading ? (
@@ -969,47 +1168,57 @@ export const OrdersPage = () => {
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="grid gap-6">
             {orders.map((order) => (
-              <Card key={order.id}>
+              <Card key={order.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Order #{order.id.slice(-8)}</h3>
-                      <p className="text-gray-600 text-sm">
-                        Placed on {new Date(order.orderDate).toLocaleDateString()}
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        Order #{order.id.slice(-8)}
+                      </h3>
+                      <p className="text-gray-600">
+                        {new Date(order.orderDate).toLocaleDateString()} • {order.items.length} items
                       </p>
-                      {order.estimatedDelivery && (
-                        <p className="text-gray-600 text-sm">
-                          Estimated delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
-                        </p>
-                      )}
                     </div>
                     <Badge className={getStatusColor(order.status)}>
-                      {getStatusText(order.status)}
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </Badge>
                   </div>
 
                   <div className="space-y-3 mb-4">
+                    <h4 className="font-medium text-gray-900">Items:</h4>
                     {order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center py-2 border-b">
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
                         <div>
                           <p className="font-medium">{item.medicineName}</p>
-                          <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                          <p className="text-sm text-gray-600">Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
                         </div>
-                        <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                        <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex justify-between items-center pt-4 border-t">
                     <div>
-                      <p className="text-sm text-gray-600">Payment: {order.paymentMethod.replace('_', ' ')}</p>
-                      <p className="text-sm text-gray-600">Delivery: {order.deliveryAddress}</p>
+                      <p className="text-sm text-gray-600">Total Amount</p>
+                      <p className="text-lg font-bold text-blue-600">${order.totalAmount.toFixed(2)}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold">${order.totalAmount.toFixed(2)}</p>
-                      <p className="text-sm text-gray-600">{order.items.length} items</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate(`/order/${order.id}`)}
+                      >
+                        View Details
+                      </Button>
+                      {order.status === 'delivered' && (
+                        <Button 
+                          onClick={() => navigate('/medicines')}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Reorder
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -1018,6 +1227,11 @@ export const OrdersPage = () => {
           </div>
         )}
       </div>
+      
+      <BottomNavBar />
     </div>
   );
 };
+
+// Export the MedicineCards component
+export { MedicineCards };
