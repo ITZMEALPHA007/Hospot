@@ -1576,7 +1576,7 @@ const MedicinesPage = () => {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       {cat.label}
@@ -1590,7 +1590,7 @@ const MedicinesPage = () => {
                   <SelectValue placeholder="All Medicines" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Medicines</SelectItem>
+                  <SelectItem value="all">All Medicines</SelectItem>
                   <SelectItem value="false">Over-the-Counter</SelectItem>
                   <SelectItem value="true">Prescription Required</SelectItem>
                 </SelectContent>
