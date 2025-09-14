@@ -150,6 +150,18 @@ backend:
           agent: "testing"
           comment: "✅ VERIFIED: GET /api/medicines/{medicine_id} endpoint continues to work correctly with updated medicine data. Returns complete medicine details with all 20 fields including id, name, category, type, description, price, dosage, sideEffects, activeIngredients, manufacturer, expiryDate, inStock, imageUrl, prescriptionRequired, minAge, maxAge, warnings, usage, and createdAt."
 
+  - task: "Medicine Category and Prescription Filtering"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ NEW VERIFICATION: Category filtering working perfectly for all requested categories: Pain Relief (4 medicines), Vitamins (3 medicines), Allergy & Cold (2 medicines), Skin Care (2 medicines), Child Health (2 medicines). Prescription filtering also working correctly: 16 Over-the-Counter medicines and 7 Prescription Required medicines. All filtering parameters work as expected for frontend functionality."
+
   - task: "Prescription Creation API"
     implemented: true
     working: true
