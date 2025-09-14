@@ -328,22 +328,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Medicine Endpoints - List all medicines with search and filtering"
-    - "Medicine Categories API"
-    - "Specific Medicine Details API"
-    - "Prescription Creation API"
-    - "User Prescriptions Retrieval API"
-    - "Specific Prescription Details API"
-    - "Mark Prescription as Used API"
-    - "Shopping Cart Retrieval API"
-    - "Add Item to Cart API"
-    - "Update Cart Item Quantity API"
-    - "Remove Item from Cart API"
-    - "Clear Cart API"
-    - "Create Order API"
-    - "User Orders Retrieval API"
-    - "Specific Order Details API"
-    - "Update Order Status API"
+    - "Medicine Category and Prescription Filtering"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
