@@ -435,7 +435,55 @@ const BookingForm = ({ hospital, bedType, isOpen, onClose }) => {
   );
 };
 
-// Header Component with Auth
+// Bottom Navigation Component
+const BottomNavBar = () => {
+  const navigate = useNavigate();
+  const location = window.location;
+  const currentPath = location.pathname;
+
+  const navItems = [
+    { path: '/home', icon: Home, label: 'Hospitals', color: 'text-blue-600' },
+    { path: '/medicines', icon: Pill, label: 'Medicines', color: 'text-green-600' },
+    { path: '/prescriptions', icon: FileText, label: 'Prescriptions', color: 'text-purple-600' },
+    { path: '/cart', icon: ShoppingCart, label: 'Cart', color: 'text-orange-600' },
+    { path: '/orders', icon: Package, label: 'Orders', color: 'text-red-600' },
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
+      <div className="grid grid-cols-5 py-2">
+        {navItems.map((item, index) => {
+          const IconComponent = item.icon;
+          const isActive = currentPath === item.path;
+          
+          return (
+            <button
+              key={index}
+              onClick={() => navigate(item.path)}
+              className={`flex flex-col items-center justify-center py-2 px-1 transition-all duration-200 ${
+                isActive 
+                  ? `${item.color} bg-gray-50` 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <IconComponent 
+                className={`h-5 w-5 mb-1 ${isActive ? 'scale-110' : ''} transition-transform duration-200`} 
+              />
+              <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
+                {item.label}
+              </span>
+              {isActive && (
+                <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-1 ${item.color.replace('text-', 'bg-')} rounded-b-full`}></div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Header Component with Auth (Updated - removed medicine navigation)
 const Header = ({ showHomeButton = false }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
