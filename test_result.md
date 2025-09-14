@@ -131,6 +131,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ GET /api/medicines/categories endpoint working correctly. Returns 14 categories with proper value/label structure. All medicine categories are properly defined and accessible."
+        - working: true
+          agent: "testing"
+          comment: "✅ UPDATED: GET /api/medicines/categories endpoint now returns 15 categories (up from 14) as expected. New 'Allergy & Cold' category successfully added and accessible. All required categories found: Pain Relief, Vitamins, Allergy & Cold, Skin Care, Child Health. Categories have correct value/label structure for frontend dropdown functionality."
 
   - task: "Specific Medicine Details API"
     implemented: true
