@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
 import { Textarea } from "./components/ui/textarea";
 import { Search, MapPin, Phone, Star, Bed, ArrowLeft, Activity, Calendar, Clock, Users, CheckCircle, User, Heart, Shield, FileText, X, Eye, EyeOff, ShoppingCart, Pill, Upload, Package, Home } from "lucide-react";
-import { PrescriptionsPage, CartPage, CheckoutPage, OrdersPage } from "./components/MedicineComponents";
+import { PrescriptionsPage, CartPage, CheckoutPage, OrdersPage, MedicineCards } from "./components/MedicineComponents";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
