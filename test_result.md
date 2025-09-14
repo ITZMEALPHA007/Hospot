@@ -146,6 +146,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ GET /api/medicines/{medicine_id} endpoint working correctly. Returns complete medicine details including all fields like dosage, side effects, warnings, active ingredients, manufacturer info, and stock levels."
+        - working: true
+          agent: "testing"
+          comment: "✅ VERIFIED: GET /api/medicines/{medicine_id} endpoint continues to work correctly with updated medicine data. Returns complete medicine details with all 20 fields including id, name, category, type, description, price, dosage, sideEffects, activeIngredients, manufacturer, expiryDate, inStock, imageUrl, prescriptionRequired, minAge, maxAge, warnings, usage, and createdAt."
 
   - task: "Prescription Creation API"
     implemented: true
