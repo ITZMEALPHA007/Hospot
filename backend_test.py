@@ -667,6 +667,8 @@ def main():
     success, medicines = tester.test_get_all_medicines()
     tester.test_get_medicine_categories()
     tester.test_search_medicines()
+    tester.test_category_filtering()
+    tester.test_prescription_filtering()
     
     # Test getting specific medicine (if we have medicines)
     if success and medicines and len(medicines) > 0:
