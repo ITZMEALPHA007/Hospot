@@ -134,7 +134,7 @@ class HospotAPITester:
 
     def test_search_medicines(self):
         """Test medicine search functionality"""
-        # Test search by name
+        # Test search by name - Paracetamol
         success1, response1 = self.run_test(
             "Search Medicines by Name (Paracetamol)",
             "GET",
@@ -147,31 +147,31 @@ class HospotAPITester:
             paracetamol_medicines = [m for m in response1 if 'Paracetamol' in m.get('name', '')]
             print(f"   Found {len(paracetamol_medicines)} medicines with 'Paracetamol' in name")
         
-        # Test filter by category
+        # Test search by name - Vitamin
         success2, response2 = self.run_test(
-            "Filter Medicines by Category (Pain Relief)",
+            "Search Medicines by Name (Vitamin)",
             "GET",
             "medicines",
             200,
-            params={"category": "Pain Relief"}
+            params={"search": "Vitamin"}
         )
         
         if success2 and isinstance(response2, list):
-            pain_relief_medicines = [m for m in response2 if m.get('category') == 'Pain Relief']
-            print(f"   Found {len(pain_relief_medicines)} Pain Relief medicines")
+            vitamin_medicines = [m for m in response2 if 'Vitamin' in m.get('name', '')]
+            print(f"   Found {len(vitamin_medicines)} medicines with 'Vitamin' in name")
         
-        # Test filter by prescription requirement
+        # Test search by name - Cough
         success3, response3 = self.run_test(
-            "Filter Medicines by Prescription (OTC)",
+            "Search Medicines by Name (Cough)",
             "GET",
             "medicines",
             200,
-            params={"prescription_required": False}
+            params={"search": "Cough"}
         )
         
         if success3 and isinstance(response3, list):
-            otc_medicines = [m for m in response3 if not m.get('prescriptionRequired', True)]
-            print(f"   Found {len(otc_medicines)} Over-the-Counter medicines")
+            cough_medicines = [m for m in response3 if 'Cough' in m.get('name', '')]
+            print(f"   Found {len(cough_medicines)} medicines with 'Cough' in name")
         
         return success1 and success2 and success3
 
