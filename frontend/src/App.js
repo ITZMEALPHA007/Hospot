@@ -1483,8 +1483,8 @@ const MedicinesPage = () => {
     try {
       const queryParams = new URLSearchParams();
       if (filters.search) queryParams.append('search', filters.search);
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.prescriptionRequired !== '') queryParams.append('prescription_required', filters.prescriptionRequired);
+      if (filters.category && filters.category !== 'all') queryParams.append('category', filters.category);
+      if (filters.prescriptionRequired !== 'all') queryParams.append('prescription_required', filters.prescriptionRequired);
 
       const url = `${API}/medicines${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       const response = await axios.get(url);
