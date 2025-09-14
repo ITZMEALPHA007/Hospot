@@ -116,6 +116,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ GET /api/medicines endpoint working correctly. Returns 10 medicines with all required fields (id, name, category, type, description, price, dosage, prescriptionRequired). Search by name (Paracetamol) and category filtering (Pain Relief) working properly. OTC medicine filtering also functional."
+        - working: true
+          agent: "testing"
+          comment: "✅ UPDATED: GET /api/medicines endpoint now returns 23 medicines (up from 10) as expected. All required fields present. Search functionality verified for 'Paracetamol' (1 result), 'Vitamin' (2 results), and 'Cough' (1 result). All medicines have proper price, name, category, and prescriptionRequired fields for frontend display and buy/add to cart functionality."
 
   - task: "Medicine Categories API"
     implemented: true
