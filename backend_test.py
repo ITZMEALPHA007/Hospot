@@ -100,7 +100,8 @@ class HospotAPITester:
             "Get Medicine Categories",
             "GET",
             "medicines/categories",
-            200
+            200,
+            expected_count=15
         )
         
         if success and isinstance(response, list):
@@ -110,6 +111,22 @@ class HospotAPITester:
                 if 'value' in category and 'label' in category:
                     print("✅ Categories have correct structure")
                     print(f"   Sample category: {category['label']}")
+                    
+                    # Check for specific categories mentioned in the request
+                    category_names = [cat['label'] for cat in response]
+                    required_categories = ["Pain Relief", "Vitamins", "Allergy & Cold", "Skin Care", "Child Health"]
+                    missing_categories = [cat for cat in required_categories if cat not in category_names]
+                    
+                    if missing_categories:
+                        print(f"⚠️  Missing required categories: {missing_categories}")
+                    else:
+                        print("✅ All required categories found")
+                        
+                    # Specifically check for the new "Allergy & Cold" category
+                    if "Allergy & Cold" in category_names:
+                        print("✅ New 'Allergy & Cold' category found")
+                    else:
+                        print("❌ New 'Allergy & Cold' category not found")
                 else:
                     print("⚠️  Categories missing value/label structure")
         
