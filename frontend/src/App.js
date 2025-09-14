@@ -1773,7 +1773,7 @@ const MedicineDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
       <Header showHomeButton={true} />
 
       <main className="container mx-auto px-4 py-8">
@@ -1925,6 +1925,8 @@ const MedicineDetailPage = () => {
           </div>
         </div>
       </main>
+      
+      <BottomNavBar />
     </div>
   );
 };
