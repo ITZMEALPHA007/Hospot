@@ -1960,6 +1960,11 @@ function App() {
                 <MedicineDetailPage />
               </ProtectedRoute>
             } />
+            <Route path="/medicine-store" element={
+              <ProtectedRoute>
+                <MedicineCards />
+              </ProtectedRoute>
+            } />
             <Route path="/prescriptions" element={
               <ProtectedRoute>
                 <PrescriptionsPage />
