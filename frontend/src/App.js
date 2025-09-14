@@ -1474,8 +1474,8 @@ const MedicinesPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [prescriptionRequired, setPrescriptionRequired] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [prescriptionRequired, setPrescriptionRequired] = useState('all');
   const navigate = useNavigate();
 
   const fetchMedicines = async (filters = {}) => {
