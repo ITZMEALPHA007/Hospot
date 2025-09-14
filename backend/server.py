@@ -69,6 +69,7 @@ class MedicineCategory(str, Enum):
     EYE_CARE = "Eye Care"
     SUPPLEMENTS = "Supplements"
     FIRST_AID = "First Aid"
+    ALLERGY_COLD = "Allergy & Cold"
 
 class MedicineType(str, Enum):
     OTC = "Over-the-Counter"
