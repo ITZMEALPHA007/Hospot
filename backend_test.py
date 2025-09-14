@@ -76,7 +76,7 @@ class HospotAPITester:
             "GET",
             "medicines",
             200,
-            expected_count=10
+            expected_count=23
         )
         
         if success and isinstance(response, list):
