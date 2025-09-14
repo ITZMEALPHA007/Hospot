@@ -504,17 +504,10 @@ const Header = ({ showHomeButton = false }) => {
           <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
         </div>
 
-        {/* Navigation Menu for Authenticated Users - Only Hospital navigation */}
+        {/* Navigation Menu for Authenticated Users - Removed hospitals navigation as it's in bottom nav */}
         {isAuthenticated && (
           <nav className="hidden md:flex items-center space-x-6">
-            <Button 
-              variant="ghost"
-              onClick={() => navigate('/home')}
-              className="text-gray-700 hover:text-blue-600"
-            >
-              <Bed className="h-4 w-4 mr-2" />
-              Hospitals
-            </Button>
+            {/* Hospital navigation removed - accessible via bottom navigation */}
           </nav>
         )}
         
