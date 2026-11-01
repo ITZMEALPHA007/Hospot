@@ -9,13 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Search, ShoppingCart, ArrowLeft, Upload, FileText, Trash2, Plus, Minus, Package, CreditCard, Truck, Activity, Bed, Pill, Home } from "lucide-react";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import { API, getSessionUser } from "../lib/authClient";
 
 // Bottom Navigation Component
 const BottomNavBar = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  useEffect(() => { getSessionUser().then(setUser).catch(() => setUser(null)); }, []);
   const location = window.location;
   const currentPath = location.pathname;
 
@@ -25,11 +25,11 @@ const BottomNavBar = () => {
     { path: '/prescriptions', icon: FileText, label: 'Prescriptions', color: 'text-purple-600' },
     { path: '/cart', icon: ShoppingCart, label: 'Cart', color: 'text-orange-600' },
     { path: '/orders', icon: Package, label: 'Orders', color: 'text-red-600' },
-  ];
+  ].filter((item) => item.path === '/home' || user?.role === 'PATIENT');
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
-      <div className="grid grid-cols-5 py-2">
+      <div className={`grid ${user?.role === 'PATIENT' ? 'grid-cols-5' : 'grid-cols-1'} py-2`}>
         {navItems.map((item, index) => {
           const IconComponent = item.icon;
           const isActive = currentPath === item.path;
@@ -64,14 +64,14 @@ const BottomNavBar = () => {
 // Header Component (simplified version for medicine components)
 const Header = () => {
   const navigate = useNavigate();
-  
-  const handleLogout = () => {
-    localStorage.removeItem('hospot_user');
+  const [user, setUser] = useState(null);
+  useEffect(() => { getSessionUser().then(setUser).catch(() => setUser(null)); }, []);
+
+  const handleLogout = async () => {
+    try { await axios.post(`${API}/auth/logout`); } catch (error) { /* Session may already have expired. */ }
+    window.dispatchEvent(new CustomEvent('hospot:session-expired'));
     navigate('/');
   };
-
-  const savedUser = localStorage.getItem('hospot_user');
-  const user = savedUser ? JSON.parse(savedUser) : null;
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -193,13 +193,6 @@ const MedicineCards = () => {
 
   const addToCart = async (medicine) => {
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) {
-        alert('Please login to add items to cart');
-        return;
-      }
-
-      const { user } = JSON.parse(savedUser);
       const cartItem = {
         medicineId: medicine.id,
         medicineName: medicine.name,
@@ -207,7 +200,7 @@ const MedicineCards = () => {
         quantity: 1
       };
 
-      await axios.post(`${API}/cart/${user.email}/add`, cartItem);
+      await axios.post(`${API}/cart/add`, cartItem);
       alert(`${medicine.name} added to cart!`);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -305,11 +298,7 @@ export const PrescriptionsPage = () => {
   const fetchPrescriptions = async () => {
     setLoading(true);
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      const response = await axios.get(`${API}/prescriptions/user/${user.email}`);
+      const response = await axios.get(`${API}/prescriptions`);
       setPrescriptions(response.data);
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
@@ -484,14 +473,8 @@ const PrescriptionUploadForm = ({ isOpen, onClose, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      
       const prescriptionData = {
         ...formData,
-        userId: user.email,
         prescriptionDate: new Date(formData.prescriptionDate),
         medicines: formData.medicines.map(med => ({
           ...med,
@@ -661,11 +644,7 @@ export const CartPage = () => {
   const fetchCart = async () => {
     setLoading(true);
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      const response = await axios.get(`${API}/cart/${user.email}`);
+      const response = await axios.get(`${API}/cart`);
       setCart(response.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -685,14 +664,7 @@ export const CartPage = () => {
     }
 
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      await axios.put(`${API}/cart/${user.email}/update`, {
-        medicineId,
-        quantity: newQuantity
-      });
+      await axios.put(`${API}/cart/update`, null, { params: { medicine_id: medicineId, quantity: newQuantity } });
       fetchCart();
     } catch (error) {
       console.error('Error updating quantity:', error);
@@ -701,11 +673,7 @@ export const CartPage = () => {
 
   const removeItem = async (medicineId) => {
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      await axios.delete(`${API}/cart/${user.email}/remove/${medicineId}`);
+      await axios.delete(`${API}/cart/remove/${medicineId}`);
       fetchCart();
     } catch (error) {
       console.error('Error removing item:', error);
@@ -714,11 +682,7 @@ export const CartPage = () => {
 
   const clearCart = async () => {
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      await axios.delete(`${API}/cart/${user.email}/clear`);
+      await axios.delete(`${API}/cart/clear`);
       fetchCart();
     } catch (error) {
       console.error('Error clearing cart:', error);
@@ -897,11 +861,7 @@ export const CheckoutPage = () => {
   const fetchCart = async () => {
     setLoading(true);
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      const response = await axios.get(`${API}/cart/${user.email}`);
+      const response = await axios.get(`${API}/cart`);
       setCart(response.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -923,13 +883,7 @@ export const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      
       const order = {
-        userId: user.email,
         items: cart.items.map(item => ({
           medicineId: item.medicineId,
           medicineName: item.medicineName,
@@ -1112,11 +1066,7 @@ export const OrdersPage = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const savedUser = localStorage.getItem('hospot_user');
-      if (!savedUser) return;
-      
-      const { user } = JSON.parse(savedUser);
-      const response = await axios.get(`${API}/orders/user/${user.email}`);
+      const response = await axios.get(`${API}/orders`);
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);

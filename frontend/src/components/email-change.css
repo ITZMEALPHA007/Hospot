@@ -1,0 +1,22 @@
+.patient-profile-email-management { min-width: 0; }
+.patient-profile-email-summary { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+.patient-profile-email-summary > span { min-width: 0; overflow-wrap: anywhere; }
+.patient-profile-email-management > small { display: block; margin-top: 5px; color: #829093; font-size: 9px; line-height: 1.45; }
+.patient-profile-email-pending { display: grid; gap: 5px; margin-top: 10px; padding: 10px; border: 1px solid #dce8e5; border-radius: 6px; background: #f7fbfa; }
+.patient-profile-email-pending strong { color: #28665f; font-size: 10px; }
+.patient-profile-email-pending span { color: #687b7e; font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.patient-profile-email-pending button { justify-self: start; margin-top: 3px; }
+.patient-profile-email-form { display: grid; gap: 6px; margin-top: 11px; }
+.patient-profile-email-form label { margin-top: 4px; color: #51656a; font-size: 10px; font-weight: 650; }
+.patient-profile-email-form input { width: 100%; min-height: 37px; padding: 0 9px; border: 1px solid #dbe3e5; border-radius: 6px; color: #24393e; background: #fff; font: inherit; font-size: 11px; }
+.patient-profile-email-form input:focus { border-color: #75aaa1; outline: 3px solid rgba(8,127,120,.12); }
+.patient-profile-email-form > p { margin: 2px 0; color: #829093; font-size: 9px; line-height: 1.5; }
+.email-verification-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f3f7f6; color: #20363b; }
+.email-verification-card { width: min(100%, 520px); padding: clamp(24px, 5vw, 42px); border: 1px solid #dce8e5; border-radius: 12px; background: white; box-shadow: 0 14px 42px rgba(23,55,57,.08); }
+.email-verification-icon { width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 18px; border-radius: 10px; color: #087f78; background: #eaf5f1; }
+.email-verification-icon svg { width: 21px; height: 21px; }
+.email-verification-icon.error, .email-verification-icon.missing { color: #925848; background: #fff2ee; }
+.email-verification-card h1 { margin: 7px 0 10px; color: #20363b; font-size: clamp(22px, 4vw, 29px); letter-spacing: -.5px; }
+.email-verification-card p { margin: 0 0 18px; color: #64777b; font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
+.email-verification-link { display: inline-flex; align-items: center; text-decoration: none; }
+@media (max-width: 600px) { .email-verification-page { padding: 14px; } .email-verification-card { padding: 24px 20px; } }

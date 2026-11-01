@@ -11,10 +11,21 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
 import { Textarea } from "./components/ui/textarea";
 import { Search, MapPin, Phone, Star, Bed, ArrowLeft, Activity, Calendar, Clock, Users, CheckCircle, User, Heart, Shield, FileText, X, Eye, EyeOff, ShoppingCart, Pill, Upload, Package, Home } from "lucide-react";
-import { PrescriptionsPage, CartPage, CheckoutPage, OrdersPage, MedicineCards } from "./components/MedicineComponents";
+import { PrescriptionsPage, CheckoutPage, MedicineCards } from "./components/MedicineComponents";
+import { API, ensureCsrf, getSessionUser } from "./lib/authClient";
+import { RoleProtectedRoute, SessionProtectedRoute } from "./components/ProtectedRoute";
+import MedicineProductImage from "./components/MedicineProductImage";
+import DashboardLayout from "./components/DashboardLayout";
+import EmailChangeVerificationPage from "./components/EmailChangeVerificationPage";
+import { DashboardAccess, DashboardRedirect } from "./components/DashboardAccess";
+import { roleForDashboardSlug } from "./components/dashboardRoutes";
+import { HospitalDetailPage, PatientBookingDetailPage, BookingCreatePage } from "./components/PatientHospitalPages";
+import { MedicineDetailPage as PatientMedicineDetailPage } from "./components/PatientMedicinePages";
+import { PatientCartPage as CartPage, PatientOrdersPage as OrdersPage, PatientOrderDetailPage } from "./components/PatientOrderPages";
+import SiteHeader from "./components/SiteHeader";
+import LandingPage from "./components/LandingPage";
+import AuthPage from "./components/AuthPage";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 
 // Authentication Context
 const AuthContext = createContext();
@@ -22,30 +33,72 @@ const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('hospot_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-      setIsAuthenticated(true);
-    }
+    let mounted = true;
+    const clearSession = () => {
+      if (mounted) {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    };
+    const restoreSession = async () => {
+      try {
+        await ensureCsrf();
+        const sessionUser = await getSessionUser();
+        if (mounted) {
+          setUser(sessionUser);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        clearSession();
+      } finally {
+        if (mounted) setAuthLoading(false);
+      }
+    };
+    window.addEventListener('hospot:session-expired', clearSession);
+    restoreSession();
+    return () => {
+      mounted = false;
+      window.removeEventListener('hospot:session-expired', clearSession);
+    };
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
+  const login = async (credentials) => {
+    await ensureCsrf();
+    const response = await axios.post(`${API}/auth/login`, credentials);
+    setUser(response.data);
     setIsAuthenticated(true);
-    localStorage.setItem('hospot_user', JSON.stringify(userData));
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('hospot_user');
+  const register = async (registration, invitationToken = null) => {
+    await ensureCsrf();
+    const endpoint = invitationToken ? '/auth/register/invited' : '/auth/register';
+    const payload = invitationToken ? { ...registration, token: invitationToken } : registration;
+    const response = await axios.post(`${API}${endpoint}`, payload);
+    setUser(response.data);
+    setIsAuthenticated(true);
+  };
+
+  const logout = async () => {
+    try {
+      await ensureCsrf();
+      await axios.post(`${API}/auth/logout`);
+    } catch (error) {
+      // Clear local identity even if the server session has already expired.
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const updateProfile = (updates) => {
+    setUser((current) => current ? { ...current, ...updates } : current);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, authLoading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -61,8 +114,86 @@ const useAuth = () => {
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated, authLoading } = useAuth();
+  return <SessionProtectedRoute loading={authLoading} authenticated={isAuthenticated}>{children}</SessionProtectedRoute>;
+};
+
+const PatientRoute = ({ children }) => {
+  const { user } = useAuth();
+  return <RoleProtectedRoute user={user} role="PATIENT" redirectTo="/dashboard">{children}</RoleProtectedRoute>;
+};
+
+const DashboardLanding = () => {
+  const { user } = useAuth();
+  return <DashboardRedirect user={user} />;
+};
+
+const EmailChangeVerificationRoute = () => {
+  const { updateProfile } = useAuth();
+  return <EmailChangeVerificationPage onProfileUpdate={updateProfile} />;
+};
+
+const DashboardRoute = () => {
+  const { user, logout, updateProfile } = useAuth();
+  const { dashboardRole, section = "overview" } = useParams();
+  const navigate = useNavigate();
+  const requestedRole = roleForDashboardSlug(dashboardRole);
+
+  if (!requestedRole) return <DashboardRedirect user={user} />;
+  return (
+    <DashboardAccess user={user} requestedRole={requestedRole}>
+      <DashboardLayout
+        role={requestedRole}
+        section={section}
+        user={user}
+        onNameChange={(name) => updateProfile({ name })}
+        onProfileUpdate={updateProfile}
+        onLogout={async () => { await logout(); navigate("/login"); }}
+      />
+    </DashboardAccess>
+  );
+};
+
+const PatientFeatureDashboard = ({ section, children }) => {
+  const { user, logout, updateProfile } = useAuth();
+  const navigate = useNavigate();
+  return (
+    <DashboardAccess user={user} requestedRole="PATIENT">
+      <DashboardLayout
+        role="PATIENT"
+        section={section}
+        user={user}
+        onNameChange={(name) => updateProfile({ name })}
+        onProfileUpdate={updateProfile}
+        onLogout={async () => { await logout(); navigate("/login"); }}
+      >
+        {children}
+      </DashboardLayout>
+    </DashboardAccess>
+  );
+};
+
+const PatientFeatureBookingRoute = () => {
+  const { user } = useAuth();
+  return <PatientFeatureDashboard section="bed-booking"><BookingCreatePage user={user} /></PatientFeatureDashboard>;
+};
+
+const PatientFeatureBookingDetailRoute = () => (
+  <PatientFeatureDashboard section="bookings"><PatientBookingDetailPage /></PatientFeatureDashboard>
+);
+
+const PatientMedicineDetailRoute = () => (
+  <PatientFeatureDashboard section="medicines"><PatientMedicineDetailPage /></PatientFeatureDashboard>
+);
+
+const LegacyMedicineDetailRedirect = () => {
+  const { medicineId } = useParams();
+  return <Navigate to={`/dashboard/patient/medicines/${encodeURIComponent(medicineId)}`} replace />;
+};
+
+const LegacyHospitalRedirect = () => {
+  const { hospitalId } = useParams();
+  return <Navigate to={`/dashboard/patient/hospitals/${encodeURIComponent(hospitalId)}`} replace />;
 };
 
 // Booking Form Component (Updated to use new user data)
@@ -438,6 +569,7 @@ const BookingForm = ({ hospital, bedType, isOpen, onClose }) => {
 // Bottom Navigation Component
 const BottomNavBar = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const location = window.location;
   const currentPath = location.pathname;
 
@@ -447,7 +579,7 @@ const BottomNavBar = () => {
     { path: '/prescriptions', icon: FileText, label: 'Prescriptions', color: 'text-purple-600' },
     { path: '/cart', icon: ShoppingCart, label: 'Cart', color: 'text-orange-600' },
     { path: '/orders', icon: Package, label: 'Orders', color: 'text-red-600' },
-  ];
+  ].filter((item) => item.path === '/home' || user?.role === 'PATIENT');
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
@@ -493,531 +625,48 @@ const Header = ({ showHomeButton = false }) => {
     navigate('/');
   };
 
-  return (
-    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div 
-          className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate(isAuthenticated ? '/home' : '/')}
-        >
-          <Activity className="h-8 w-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
-        </div>
-
-        {/* Navigation Menu for Authenticated Users - Removed hospitals navigation as it's in bottom nav */}
-        {isAuthenticated && (
-          <nav className="hidden md:flex items-center space-x-6">
-            {/* Hospital navigation removed - accessible via bottom navigation */}
-          </nav>
-        )}
-        
-        <div className="flex items-center space-x-4">
-          {isAuthenticated ? (
-            <>
-              {showHomeButton && (
-                <Button 
-                  variant="outline"
-                  onClick={() => navigate('/home')}
-                  className="text-gray-600 md:hidden"
-                >
-                  Home
-                </Button>
-              )}
-              <span className="text-sm text-gray-600 hidden sm:block">Welcome, {user?.name}</span>
-              <Button 
-                onClick={handleLogout}
-                variant="outline"
-                className="text-gray-600"
-              >
-                Logout
-              </Button>
-            </>
-          ) : (
-            <Button 
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-            >
-              Login
-            </Button>
-          )}
-        </div>
-      </div>
-    </header>
-  );
+  return <SiteHeader mode="app" isAuthenticated={isAuthenticated} user={user} showHomeButton={showHomeButton} onHome={() => navigate('/home')} onLogout={handleLogout} onLogin={() => navigate('/login')} onBrand={() => navigate(isAuthenticated ? '/dashboard' : '/')} />;
 };
 
-// Landing Page Component (Updated)
-const LandingPage = () => {
+const LandingPageRoute = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-
-  // Redirect to home if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/home');
-    }
+    if (isAuthenticated) navigate('/dashboard');
   }, [isAuthenticated, navigate]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <Header />
-
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <div className="mb-8">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-100 rounded-full mb-6">
-              <Activity className="h-12 w-12 text-blue-600" />
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-              Find & Book Hospital Beds<br />
-              <span className="text-blue-600">in Real Time</span>
-            </h2>
-            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Connect with hospitals instantly. Check bed availability, compare facilities, 
-              and secure the care you need when it matters most.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button 
-              size="lg"
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
-            >
-              Get Started
-            </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/login')}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg"
-            >
-              Login to Continue
-            </Button>
-          </div>
-
-          {/* Features */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
-            <Card className="border-none shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle className="text-xl">Real-time Search</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Search hospitals by location and instantly see bed availability across ICU, General, and Special care units.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Bed className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl">Live Bed Count</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  View real-time bed availability with detailed breakdown by department and emergency status.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-6 w-6 text-purple-600" />
-                </div>
-                <CardTitle className="text-xl">Location Based</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Find hospitals near you with distance information and ratings to make informed decisions quickly.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Call to Action */}
-          <div className="mt-16 bg-white rounded-2xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Get Started?</h3>
-            <p className="text-gray-600 mb-6">
-              Create your account or login to access real-time hospital bed availability and book instantly.
-            </p>
-            <Button 
-              size="lg"
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
-            >
-              Login Now
-            </Button>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 mt-16">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Activity className="h-6 w-6" />
-            <span className="text-xl font-bold">Hospot</span>
-          </div>
-          <p className="text-gray-400">
-            Connecting patients with healthcare when it matters most.
-          </p>
-        </div>
-      </footer>
-    </div>
-  );
+  return <LandingPage onGetStarted={() => navigate('/login')} onLogin={() => navigate('/login')} />;
 };
 
-// Login Page Component (Enhanced with Validations)
+// Login and signup controller: authentication remains in the existing context.
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    name: '',
-    password: ''
-  });
-  const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, register, isAuthenticated, authLoading } = useAuth();
+  const invitationParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const invitationToken = invitationParams.get("invite");
+  const invitationEmail = invitationParams.get("email") || "";
 
-  // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/home');
-    }
-  }, [isAuthenticated, navigate]);
+    if (!authLoading && isAuthenticated) navigate("/dashboard");
+  }, [authLoading, isAuthenticated, navigate]);
 
-  // Validation functions
-  const validateName = (name) => {
-    const nameRegex = /^[A-Za-z\s]+$/;
-    if (!name.trim()) {
-      return "Full name is required";
+  const authenticate = async ({ isRegistering, name, email, password, invitationToken: token }) => {
+    if (isRegistering) {
+      await register({ name, email, password }, token);
+    } else {
+      await login({ email, password });
     }
-    if (name.trim().length < 2) {
-      return "Name must be at least 2 characters long";
-    }
-    if (!nameRegex.test(name.trim())) {
-      return "Name can only contain letters and spaces";
-    }
-    return null;
+    navigate("/dashboard");
   };
-
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      return "Email address is required";
-    }
-    if (!emailRegex.test(email.trim())) {
-      return "Please enter a valid email address";
-    }
-    return null;
-  };
-
-  const validatePassword = (password) => {
-    if (!password) {
-      return "Password is required";
-    }
-    if (password.length < 8) {
-      return "Password must be at least 8 characters long";
-    }
-    
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasLowercase = /[a-z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
-    const missingRequirements = [];
-    if (!hasUppercase) missingRequirements.push("one uppercase letter");
-    if (!hasLowercase) missingRequirements.push("one lowercase letter");
-    if (!hasNumber) missingRequirements.push("one number");
-    if (!hasSpecialChar) missingRequirements.push("one special character");
-
-    if (missingRequirements.length > 0) {
-      return `Password must contain ${missingRequirements.join(", ")}`;
-    }
-
-    return null;
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: null
-      }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    // Validate all fields
-    const nameError = validateName(formData.name);
-    const emailError = validateEmail(formData.email);
-    const passwordError = validatePassword(formData.password);
-
-    const newErrors = {
-      name: nameError,
-      email: emailError,
-      password: passwordError
-    };
-
-    setErrors(newErrors);
-
-    // Check if there are any errors
-    const hasErrors = Object.values(newErrors).some(error => error !== null);
-    
-    if (!hasErrors) {
-      // Simulate login delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      login({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        contact: formData.email.trim()
-      });
-      navigate('/home');
-    }
-    
-    setIsSubmitting(false);
-  };
-
-  const getPasswordStrength = () => {
-    const password = formData.password;
-    if (!password) return { strength: 0, label: '', color: 'bg-gray-200' };
-    
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/\d/.test(password)) score++;
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
-
-    const levels = [
-      { strength: 0, label: '', color: 'bg-gray-200' },
-      { strength: 20, label: 'Very Weak', color: 'bg-red-500' },
-      { strength: 40, label: 'Weak', color: 'bg-red-400' },
-      { strength: 60, label: 'Fair', color: 'bg-yellow-500' },
-      { strength: 80, label: 'Good', color: 'bg-blue-500' },
-      { strength: 100, label: 'Strong', color: 'bg-green-500' }
-    ];
-
-    return levels[score];
-  };
-
-  const passwordStrength = getPasswordStrength();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md sm:max-w-lg">
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <div 
-              className="flex items-center justify-center space-x-2 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/')}
-            >
-              <Activity className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Hospot</h1>
-            </div>
-            <CardTitle className="text-xl sm:text-2xl text-gray-900">Welcome to Hospot</CardTitle>
-            <CardDescription className="text-gray-600 px-2">
-              Create your account to find and book hospital beds instantly
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="px-4 sm:px-6">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Full Name Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <User className="h-4 w-4 mr-2 text-blue-600" />
-                  Full Name *
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full transition-colors ${
-                    errors.name 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                  }`}
-                  required
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-xs flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {errors.name}
-                  </p>
-                )}
-              </div>
-
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <span className="text-blue-600 mr-2">@</span>
-                  Email Address *
-                </label>
-                <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full transition-colors ${
-                    errors.email 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                  }`}
-                  required
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-xs flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-blue-600" />
-                  Password *
-                </label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a secure password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`w-full pr-12 transition-colors ${
-                      errors.password 
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                    }`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                  >
-                    {showPassword ? (
-                      <span className="text-sm">👁️</span>
-                    ) : (
-                      <span className="text-sm">👁️‍🗨️</span>
-                    )}
-                  </button>
-                </div>
-
-                {/* Password Strength Indicator */}
-                {formData.password && (
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
-                          style={{ width: `${passwordStrength.strength}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-xs text-gray-600 min-w-16">{passwordStrength.label}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Password Requirements */}
-                <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                  <p className="text-xs font-medium text-gray-700 mb-2">Password must contain:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
-                    <div className={`flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                      <span className="mr-1">{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
-                      Uppercase letter
-                    </div>
-                    <div className={`flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                      <span className="mr-1">{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
-                      Lowercase letter
-                    </div>
-                    <div className={`flex items-center ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                      <span className="mr-1">{/\d/.test(formData.password) ? '✓' : '○'}</span>
-                      Number
-                    </div>
-                    <div className={`flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'}`}>
-                      <span className="mr-1">{/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '○'}</span>
-                      Special character
-                    </div>
-                  </div>
-                </div>
-
-                {errors.password && (
-                  <p className="text-red-500 text-xs flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {errors.password}
-                  </p>
-                )}
-              </div>
-              
-              {/* Submit Button */}
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating Account...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Create Account & Login
-                  </>
-                )}
-              </Button>
-              
-              {/* Back Button */}
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/')}
-                disabled={isSubmitting}
-                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 py-3 text-base transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </form>
-
-            {/* Additional Info */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500 text-center px-4">
-                By creating an account, you agree to our Terms of Service and Privacy Policy. 
-                Your information is encrypted and secure.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <AuthPage
+      invitationToken={invitationToken}
+      invitationEmail={invitationEmail}
+      onAuthenticate={authenticate}
+      onReturnHome={() => navigate("/")}
+    />
   );
 };
-
 // Home Page Component (Protected)
 const HomePage = () => {
   const [hospitals, setHospitals] = useState([]);
@@ -1493,15 +1142,45 @@ const MedicinesPage = () => {
 
   const fetchMedicines = async (filters = {}) => {
     setLoading(true);
+  
     try {
       const queryParams = new URLSearchParams();
-      if (filters.search) queryParams.append('search', filters.search);
-      if (filters.category && filters.category !== 'all') queryParams.append('category', filters.category);
-      if (filters.prescriptionRequired !== 'all') queryParams.append('prescription_required', filters.prescriptionRequired);
-
-      const url = `${API}/medicines${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+  
+      if (filters.search) {
+        queryParams.append('search', filters.search);
+      }
+  
+      if (
+        filters.category &&
+        filters.category !== 'all'
+      ) {
+        queryParams.append('category', filters.category);
+      }
+  
+      if (
+        filters.prescriptionRequired === true ||
+        filters.prescriptionRequired === false
+      ) {
+        queryParams.append(
+          'prescription_required',
+          filters.prescriptionRequired
+        );
+      }
+  
+      const url = `${API}/medicines${
+        queryParams.toString()
+          ? '?' + queryParams.toString()
+          : ''
+      }`;
+  
+      console.log("Fetching:", url);
+  
       const response = await axios.get(url);
+  
+      console.log("Medicines:", response.data);
+  
       setMedicines(response.data);
+  
     } catch (error) {
       console.error('Error fetching medicines:', error);
     } finally {
@@ -1542,9 +1221,6 @@ const MedicinesPage = () => {
 
   const addToCart = async (medicine) => {
     try {
-      const { user } = JSON.parse(localStorage.getItem('hospot_user') || '{}');
-      if (!user) return;
-
       const cartItem = {
         medicineId: medicine.id,
         medicineName: medicine.name,
@@ -1552,7 +1228,7 @@ const MedicinesPage = () => {
         quantity: 1
       };
 
-      await axios.post(`${API}/cart/${user.email}/add`, cartItem);
+      await axios.post(`${API}/cart/add`, cartItem);
       alert(`${medicine.name} added to cart!`);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -1652,7 +1328,7 @@ const MedicinesPage = () => {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-blue-600">${medicine.price}</span>
+                        <span className="text-lg font-bold text-blue-600">₹{medicine.price}</span>
                         <Badge 
                           variant="outline" 
                           className={medicine.prescriptionRequired ? 'border-red-500 text-red-600' : 'border-green-500 text-green-600'}
@@ -1724,9 +1400,6 @@ const MedicineDetailPage = () => {
 
   const addToCart = async () => {
     try {
-      const { user } = JSON.parse(localStorage.getItem('hospot_user') || '{}');
-      if (!user) return;
-
       const cartItem = {
         medicineId: medicine.id,
         medicineName: medicine.name,
@@ -1734,7 +1407,7 @@ const MedicineDetailPage = () => {
         quantity: quantity
       };
 
-      await axios.post(`${API}/cart/${user.email}/add`, cartItem);
+      await axios.post(`${API}/cart/add`, cartItem);
       alert(`${medicine.name} added to cart!`);
       navigate('/cart');
     } catch (error) {
@@ -1782,15 +1455,7 @@ const MedicineDetailPage = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Image Section */}
           <div className="space-y-4">
-            {medicine.imageUrl && (
-              <div className="aspect-square bg-white rounded-lg p-8 shadow-sm">
-                <img 
-                  src={medicine.imageUrl} 
-                  alt={medicine.name}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            )}
+            <MedicineProductImage medicine={medicine} />
           </div>
 
           {/* Details Section */}
@@ -1800,8 +1465,14 @@ const MedicineDetailPage = () => {
               <p className="text-gray-600 text-lg">{medicine.description}</p>
             </div>
 
+            {medicine.isDemo && (
+              <p role="note" className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Demo catalog entry. Stock and price are illustrative, not commercial inventory.
+              </p>
+            )}
+
             <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold text-blue-600">${medicine.price}</span>
+              <span className="text-3xl font-bold text-blue-600">₹{medicine.price}</span>
               <Badge 
                 variant="outline" 
                 className={medicine.prescriptionRequired ? 'border-red-500 text-red-600' : 'border-green-500 text-green-600'}
@@ -1931,61 +1602,55 @@ function App() {
       <div className="App">
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<LandingPageRoute />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/home" element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } />
-            <Route path="/hospital/:hospitalId" element={
-              <ProtectedRoute>
-                <HospitalProgressPage />
-              </ProtectedRoute>
-            } />
+            <Route path="/verify-email-change" element={<EmailChangeVerificationRoute />} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardLanding /></ProtectedRoute>} />
+            <Route path="/dashboard/patient/hospitals/:hospitalId" element={<ProtectedRoute><PatientFeatureDashboard section="hospitals"><HospitalDetailPage /></PatientFeatureDashboard></ProtectedRoute>} />
+            <Route path="/dashboard/patient/bookings/new" element={<ProtectedRoute><PatientFeatureBookingRoute /></ProtectedRoute>} />
+            <Route path="/dashboard/patient/bookings/:bookingId" element={<ProtectedRoute><PatientFeatureBookingDetailRoute /></ProtectedRoute>} />
+            <Route path="/dashboard/patient/medicines/:medicineId" element={<ProtectedRoute><PatientMedicineDetailRoute /></ProtectedRoute>} />
+            <Route path="/dashboard/:dashboardRole/:section?" element={<ProtectedRoute><DashboardRoute /></ProtectedRoute>} />
+            <Route path="/home" element={<ProtectedRoute><PatientRoute><Navigate to="/dashboard/patient/hospitals" replace /></PatientRoute></ProtectedRoute>} />
+            <Route path="/hospital/:hospitalId" element={<ProtectedRoute><PatientRoute><LegacyHospitalRedirect /></PatientRoute></ProtectedRoute>} />
             <Route path="/medicines" element={
               <ProtectedRoute>
-                <MedicinesPage />
+                <PatientRoute><Navigate to="/dashboard/patient/medicines" replace /></PatientRoute>
               </ProtectedRoute>
             } />
             <Route path="/medicine/:medicineId" element={
               <ProtectedRoute>
-                <MedicineDetailPage />
+                <PatientRoute><LegacyMedicineDetailRedirect /></PatientRoute>
               </ProtectedRoute>
             } />
             <Route path="/medicine-store" element={
               <ProtectedRoute>
-                <MedicineCards />
+                <PatientRoute><Navigate to="/dashboard/patient/medicines" replace /></PatientRoute>
               </ProtectedRoute>
             } />
             <Route path="/prescriptions" element={
               <ProtectedRoute>
-                <PrescriptionsPage />
+                <PatientRoute><PrescriptionsPage /></PatientRoute>
               </ProtectedRoute>
             } />
             <Route path="/cart" element={
               <ProtectedRoute>
-                <CartPage />
+                <PatientRoute><PatientFeatureDashboard section="cart"><CartPage /></PatientFeatureDashboard></PatientRoute>
               </ProtectedRoute>
             } />
             <Route path="/orders" element={
               <ProtectedRoute>
-                <OrdersPage />
+                <PatientRoute><PatientFeatureDashboard section="orders"><OrdersPage /></PatientFeatureDashboard></PatientRoute>
+              </ProtectedRoute>
+            } />
+            <Route path="/orders/:orderId" element={
+              <ProtectedRoute>
+                <PatientRoute><PatientFeatureDashboard section="orders"><PatientOrderDetailPage /></PatientFeatureDashboard></PatientRoute>
               </ProtectedRoute>
             } />
             <Route path="/checkout" element={
               <ProtectedRoute>
-                <CheckoutPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/medicines" element={
-              <ProtectedRoute>
-                <MedicinesPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/medicine/:medicineId" element={
-              <ProtectedRoute>
-                <MedicineDetailPage />
+                <PatientRoute><CheckoutPage /></PatientRoute>
               </ProtectedRoute>
             } />
           </Routes>

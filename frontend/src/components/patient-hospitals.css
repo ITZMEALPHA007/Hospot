@@ -1,0 +1,194 @@
+.care-page { width: 100%; max-width: 1080px; margin: 0 auto; color: #21363c; }
+.care-page-heading { position: relative; margin: 0 0 23px; }
+.care-page-heading h2 { margin: 6px 0 6px; color: #1c3036; font-size: clamp(24px, 3vw, 32px); font-weight: 650; letter-spacing: -.8px; line-height: 1.18; }
+.care-page-heading p { max-width: 680px; margin: 0; color: #687a7f; font-size: 13px; line-height: 1.65; }
+.care-eyebrow { display: block; color: #08766f; font-size: 10px; font-weight: 750; letter-spacing: .105em; line-height: 1.5; text-transform: uppercase; }
+.care-back-link { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 17px; padding: 3px 0; border: 0; color: #53686e; background: transparent; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.care-back-link:hover, .care-text-button:hover { color: #08766f; }
+.care-back-link:focus-visible, .care-text-button:focus-visible, .care-clear-search:focus-visible { outline: 2px solid #087f78; outline-offset: 3px; border-radius: 3px; }
+.care-search { display: flex; align-items: center; gap: 12px; max-width: 760px; min-height: 54px; margin: 0 0 18px; padding: 6px 7px 6px 16px; border: 1px solid #dce5e7; border-radius: 9px; color: #7a8b90; background: #fff; box-shadow: 0 3px 12px rgba(22,50,57,.035); }
+.care-search:focus-within { border-color: #8ebeb8; box-shadow: 0 0 0 3px rgba(8,127,120,.09); }
+.care-search input { width: 100%; min-width: 0; flex: 1; border: 0; outline: 0; color: #263c42; background: transparent; font: inherit; font-size: 13px; }
+.care-search input::placeholder { color: #9aa8ac; }
+.care-primary-button, .care-secondary-button, .care-cancel-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid transparent; border-radius: 6px; font: inherit; font-size: 12px; font-weight: 650; line-height: 1.2; text-decoration: none; cursor: pointer; transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+.care-primary-button { color: white; background: #08766f; }
+.care-primary-button:hover:not(:disabled) { background: #075e59; }
+.care-primary-button:focus-visible, .care-secondary-button:focus-visible, .care-cancel-button:focus-visible, .care-inline-action:focus-visible { outline: 2px solid #087f78; outline-offset: 3px; }
+.care-primary-button:disabled, .care-secondary-button:disabled, .care-cancel-button:disabled, .care-inline-action:disabled { opacity: .52; cursor: not-allowed; }
+.care-secondary-button { border-color: #dce5e7; color: #4d6368; background: #fff; }
+.care-secondary-button:hover:not(:disabled) { border-color: #a9c5c2; color: #075e59; background: #f7fbfa; }
+.care-cancel-button { border-color: #f0d5d3; color: #9b403d; background: #fff; }
+.care-cancel-button:hover:not(:disabled) { border-color: #dfaaa6; background: #fff7f6; }
+.care-clear-search { display: grid; flex: 0 0 auto; place-items: center; padding: 4px; border: 0; color: #849398; background: transparent; cursor: pointer; }
+.care-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.care-results-label { margin: 0 0 12px; color: #74858a; font-size: 12px; }
+.care-hospital-list, .care-booking-list { display: flex; flex-direction: column; gap: 13px; }
+.care-hospital-card { display: grid; grid-template-columns: minmax(0, 1.04fr) minmax(330px, .96fr); gap: 22px; padding: 20px; border: 1px solid #e0e8e9; border-radius: 10px; background: #fff; box-shadow: 0 3px 12px rgba(20,48,55,.035); transition: border-color .16s ease, box-shadow .16s ease; }
+.care-hospital-card:hover { border-color: #cbdcda; box-shadow: 0 7px 20px rgba(20,48,55,.07); }
+.care-hospital-title-row { display: flex; align-items: flex-start; gap: 12px; }
+.care-hospital-mark { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border: 1px solid #dcebe7; border-radius: 9px; color: #08766f; background: #edf7f4; }
+.care-hospital-mark.large { width: 50px; height: 50px; flex-basis: 50px; }
+.care-hospital-title-row h3, .care-detail-intro h3 { margin: 1px 0 4px; color: #20363c; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.25px; }
+.care-hospital-title-row p { margin: 0; color: #6f8085; font-size: 12px; }
+.care-contact-lines { display: grid; gap: 9px; margin: 19px 0 13px; }
+.care-contact-lines p, .care-detail-contact a { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: #61747a; font-size: 12px; line-height: 1.5; }
+.care-contact-lines svg, .care-detail-contact svg { flex: 0 0 auto; margin-top: 1px; color: #8a9a9e; }
+.care-contact-lines a, .care-detail-contact a { color: inherit; text-decoration: none; }
+.care-contact-lines a:hover, .care-detail-contact a:hover { color: #08766f; text-decoration: underline; }
+.care-emergency { width: fit-content; display: inline-flex; align-items: center; gap: 5px; color: #387a69; font-size: 11px; font-weight: 600; }
+.care-emergency svg { color: #458b78; }
+.care-hospital-availability { min-width: 0; padding: 13px 14px 11px; border: 1px solid #e7edef; border-radius: 8px; background: #f9fbfb; }
+.care-availability-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid #e8eeee; }
+.care-availability-heading > div { display: flex; align-items: baseline; gap: 9px; }
+.care-availability-heading .care-eyebrow { color: #73868a; font-size: 9px; }
+.care-availability-heading strong { color: #1d4546; font-size: 19px; font-weight: 700; }
+.care-availability-status { padding: 5px 8px; border: 1px solid #d7e9e3; border-radius: 20px; color: #347864; background: #f0f8f4; font-size: 9px; font-weight: 650; white-space: nowrap; }
+.care-availability-status.is-none { border-color: #ebdfd5; color: #8d6852; background: #faf5ef; }
+.care-beds { display: flex; flex-direction: column; }
+.care-bed-row { min-height: 50px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid #e9eeee; }
+.care-bed-row:last-child { border-bottom: 0; }
+.care-bed-row.is-unavailable { color: #89979a; }
+.care-bed-icon { width: 29px; height: 29px; flex: 0 0 29px; display: grid; place-items: center; border-radius: 7px; color: #4c8880; background: #eaf4f1; }
+.care-bed-row.is-unavailable .care-bed-icon { color: #99a4a6; background: #f0f3f3; }
+.care-bed-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.care-bed-copy strong { color: #34494e; font-size: 11px; font-weight: 650; }
+.care-bed-copy small { color: #88969a; font-size: 9px; }
+.care-bed-count { color: #265a56; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.care-bed-count small { color: #879598; font-size: 9px; font-weight: 500; }
+.care-bed-row.is-unavailable .care-bed-count { color: #849194; }
+.care-inline-action { min-height: 29px; display: inline-flex; align-items: center; gap: 4px; padding: 0 5px; border: 0; color: #08766f; background: transparent; font: inherit; font-size: 10px; font-weight: 650; cursor: pointer; }
+.care-details-button { width: 100%; min-height: 33px; margin-top: 7px; }
+.care-state, .care-empty { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 28px; border: 1px dashed #d8e2e4; border-radius: 10px; color: #697c81; background: rgba(255,255,255,.75); text-align: center; font-size: 12px; }
+.care-state-error { flex-direction: row; align-items: flex-start; justify-content: flex-start; color: #9a4944; text-align: left; }
+.care-state-error > svg { flex: 0 0 auto; }
+.care-state-error strong { display: block; color: #743b37; font-size: 13px; }
+.care-state-error p { margin: 5px 0 11px; color: #88605c; line-height: 1.55; }
+.care-spinner { width: 23px; height: 23px; border: 2px solid #d9e9e6; border-top-color: #08766f; border-radius: 50%; animation: care-spin .75s linear infinite; }
+@keyframes care-spin { to { transform: rotate(360deg); } }
+.care-empty { min-height: 230px; border-style: solid; background: #fff; }
+.care-empty-icon, .care-success-panel > span:first-child { width: 43px; height: 43px; display: grid; place-items: center; border-radius: 11px; color: #08766f; background: #eaf5f2; }
+.care-empty h3 { margin: 0; color: #2a4147; font-size: 16px; }
+.care-empty p { max-width: 450px; margin: 0 0 3px; color: #718187; font-size: 12px; line-height: 1.6; }
+.care-detail-card, .care-detail-section { padding: 22px; border: 1px solid #e1e9ea; border-radius: 10px; background: #fff; box-shadow: 0 3px 12px rgba(20,48,55,.035); }
+.care-detail-intro { display: flex; align-items: flex-start; gap: 14px; }
+.care-detail-intro h3 { margin-top: 4px; font-size: 20px; }
+.care-detail-intro p { margin: 0; color: #6d7e83; font-size: 12px; line-height: 1.6; }
+.care-detail-contact { display: flex; align-items: center; flex-wrap: wrap; gap: 17px; margin: 17px 0 0 64px; padding-top: 13px; border-top: 1px solid #edf0f0; }
+.care-detail-section { margin-top: 16px; }
+.care-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.care-section-heading h3 { margin: 4px 0 0; color: #263d43; font-size: 17px; }
+.care-updated-label { display: inline-flex; align-items: center; gap: 6px; color: #859397; font-size: 10px; }
+.care-section-description { margin: 8px 0 12px; color: #748388; font-size: 11px; line-height: 1.6; }
+.care-detail-section > .care-beds { margin-top: 6px; }
+.care-detail-section .care-bed-row { min-height: 62px; }
+.care-detail-section .care-bed-icon { width: 34px; height: 34px; flex-basis: 34px; }
+.care-detail-section .care-bed-copy strong { font-size: 12px; }
+.care-detail-section .care-bed-copy small, .care-detail-section .care-bed-count small { font-size: 10px; }
+.care-detail-section .care-bed-count { font-size: 16px; }
+.care-results-label { color: #75858a; }
+.care-booking-summary { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; padding: 13px 15px; border: 1px solid #dbe9e5; border-radius: 8px; color: #28766e; background: #f3f9f7; }
+.care-booking-summary > span:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.care-booking-summary strong { overflow: hidden; color: #2e4a4d; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.care-booking-summary small { color: #718489; font-size: 10px; }
+.care-summary-availability { color: #347864; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.care-inline-warning { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; padding: 11px 13px; border: 1px solid #efe4cb; border-radius: 7px; color: #7e6940; background: #fffaf0; font-size: 11px; line-height: 1.5; }
+.care-inline-warning button, .care-text-button { flex: 0 0 auto; padding: 4px 0; border: 0; color: #795e29; background: transparent; font: inherit; font-size: 11px; font-weight: 650; text-decoration: underline; cursor: pointer; }
+.care-booking-form { display: flex; flex-direction: column; gap: 13px; }
+.care-booking-form fieldset { min-width: 0; margin: 0; padding: 17px 18px 19px; border: 1px solid #e2e9ea; border-radius: 9px; background: white; }
+.care-booking-form fieldset:disabled { opacity: .62; }
+.care-review-panel { padding: 18px; border: 1px solid #e2e9ea; border-radius: 9px; background: #fff; }
+.care-review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 19px; padding: 15px 0 18px; }
+.care-review-grid > div { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.care-review-grid span { color: #859397; font-size: 10px; }
+.care-review-grid strong { overflow-wrap: anywhere; color: #344b50; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.care-review-full { grid-column: 1 / -1; }
+.care-review-panel .care-booking-notice { margin-bottom: 14px; }
+.care-booking-form legend { padding: 0 6px; color: #2c454a; font-size: 13px; font-weight: 700; }
+.care-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.care-form-grid label { min-width: 0; display: flex; flex-direction: column; gap: 6px; color: #53686e; font-size: 11px; font-weight: 600; }
+.care-form-grid input, .care-form-grid select, .care-form-grid textarea { width: 100%; min-width: 0; min-height: 39px; padding: 8px 10px; border: 1px solid #dce5e7; border-radius: 6px; outline: none; color: #293f44; background: #fff; font: inherit; font-size: 12px; font-weight: 450; }
+.care-form-grid textarea { min-height: 64px; resize: vertical; }
+.care-form-grid input:focus, .care-form-grid select:focus, .care-form-grid textarea:focus { border-color: #75aaa3; box-shadow: 0 0 0 3px rgba(8,127,120,.09); }
+.care-form-grid input:disabled, .care-form-grid select:disabled, .care-form-grid textarea:disabled { background: #f5f7f7; }
+.care-field-full { grid-column: 1 / -1; }
+.care-optional { color: #9aa6a9; font-size: 9px; font-weight: 450; }
+.care-booking-notice { display: flex; align-items: flex-start; gap: 9px; padding: 11px 13px; border: 1px solid #dfeae7; border-radius: 7px; color: #607579; background: #f7faf9; font-size: 10px; line-height: 1.55; }
+.care-booking-notice svg { flex: 0 0 auto; color: #488d7e; }
+.care-form-actions, .care-success-actions { display: flex; justify-content: flex-end; gap: 9px; }
+.care-form-error { margin: 0 0 12px; padding: 10px 12px; border: 1px solid #f0d7d4; border-radius: 6px; color: #934943; background: #fff7f6; font-size: 11px; line-height: 1.5; }
+.care-success-notice { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; color: #347864; font-size: 11px; }
+.care-success-panel { max-width: 590px; margin: 35px auto; padding: 34px; border: 1px solid #dceae6; border-radius: 12px; background: linear-gradient(135deg, #eff8f5, #fff 76%); text-align: center; }
+.care-success-panel > span:first-child { margin: 0 auto 17px; }
+.care-success-panel h2 { margin: 6px 0 9px; color: #20383d; font-size: 23px; letter-spacing: -.5px; }
+.care-success-panel p { margin: 0 auto 21px; color: #65797e; font-size: 12px; line-height: 1.7; }
+.care-success-actions { justify-content: center; flex-wrap: wrap; }
+.care-list-toolbar { display: flex; align-items: center; justify-content: space-between; margin: -6px 0 13px; color: #819095; font-size: 11px; }
+.care-booking-card { padding: 17px 18px; border: 1px solid #e0e8e9; border-radius: 9px; background: white; box-shadow: 0 2px 9px rgba(20,48,55,.025); }
+.care-booking-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.care-booking-card-head h3 { max-width: 100%; margin: 4px 0 0; overflow-wrap: anywhere; color: #283f45; font-size: 14px; font-weight: 650; }
+.care-booking-card-head .care-eyebrow { max-width: 550px; overflow: hidden; color: #829195; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.care-status { flex: 0 0 auto; padding: 5px 9px; border: 1px solid #dce5e7; border-radius: 20px; color: #62747a; background: #f5f7f7; font-size: 10px; font-weight: 700; text-transform: capitalize; }
+.care-status-pending { border-color: #eee2c9; color: #886a29; background: #fff9ec; }
+.care-status-confirmed { border-color: #d0e8dc; color: #327254; background: #f0f8f3; }
+.care-status-rejected, .care-status-cancelled { border-color: #efd8d5; color: #9b514b; background: #fff5f4; }
+.care-booking-meta { display: flex; flex-wrap: wrap; gap: 9px 18px; margin: 14px 0; padding-bottom: 13px; border-bottom: 1px solid #edf0f0; color: #718186; font-size: 10px; }
+.care-booking-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.care-booking-meta svg { color: #8b999d; }
+.care-record-actions { display: flex; align-items: center; gap: 9px; }
+.care-record-actions .care-secondary-button { min-height: 32px; }
+.care-record-actions .care-cancel-button { min-height: 32px; margin-left: auto; }
+.care-confirm-cancel { margin: 0 0 12px; padding: 11px 12px; border: 1px solid #f0dfd2; border-radius: 7px; background: #fffaf5; }
+.care-confirm-cancel strong { color: #71553f; font-size: 11px; }
+.care-confirm-cancel p { margin: 4px 0 8px; color: #876f5d; font-size: 10px; }
+.care-confirm-cancel .care-text-button { margin-left: 10px; }
+.care-booking-detail { margin-top: 0; }
+.care-booking-detail .care-booking-card-head { padding-bottom: 16px; border-bottom: 1px solid #edf0f0; }
+.care-booking-detail .care-booking-card-head h3 { font-size: 12px; font-weight: 550; }
+.care-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px 20px; padding: 19px 0; }
+.care-detail-grid > div { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.care-detail-grid span { color: #859397; font-size: 10px; }
+.care-detail-grid strong { overflow-wrap: anywhere; color: #344b50; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.care-detail-grid small { color: #738489; font-size: 10px; line-height: 1.45; }
+.care-detail-grid a { color: inherit; text-decoration: none; }
+.care-detail-grid a:hover { color: #08766f; text-decoration: underline; }
+.care-booking-detail-actions { display: flex; gap: 9px; padding-top: 14px; border-top: 1px solid #edf0f0; }
+.care-modal-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(17,34,39,.48); }
+.care-confirm-dialog { width: min(100%, 420px); padding: 24px; border: 1px solid #e0e8e9; border-radius: 11px; background: white; box-shadow: 0 18px 55px rgba(15,34,38,.22); }
+.care-confirm-dialog h3 { margin: 14px 0 7px; color: #263d43; font-size: 17px; }
+.care-confirm-dialog p { margin: 0 0 19px; color: #6d7e83; font-size: 12px; line-height: 1.6; }
+.care-confirm-dialog > div { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 760px) {
+  .care-page-heading { margin-bottom: 18px; }
+  .care-hospital-card { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 15px; }
+  .care-hospital-availability { padding: 11px 12px 9px; }
+  .care-detail-card, .care-detail-section { padding: 17px; }
+}
+@media (max-width: 520px) {
+  .care-search { gap: 8px; min-height: 49px; padding-left: 11px; }
+  .care-search input { font-size: 11px; }
+  .care-search .care-primary-button { width: 39px; min-width: 39px; padding: 0; }
+  .care-search .care-primary-button span { display: none; }
+  .care-hospital-title-row h3 { font-size: 15px; }
+  .care-contact-lines { margin-top: 14px; }
+  .care-detail-contact { margin-left: 0; }
+  .care-booking-summary { align-items: flex-start; flex-wrap: wrap; }
+  .care-summary-availability { width: 100%; padding-left: 29px; }
+  .care-inline-warning { align-items: flex-start; flex-direction: column; }
+  .care-form-grid, .care-detail-grid, .care-review-grid { grid-template-columns: minmax(0, 1fr); }
+  .care-field-full { grid-column: auto; }
+  .care-booking-form fieldset { padding: 14px 12px 15px; }
+  .care-booking-form legend { font-size: 12px; }
+  .care-form-actions { flex-direction: column-reverse; }
+  .care-form-actions button { width: 100%; }
+  .care-booking-card { padding: 14px 12px; }
+  .care-booking-card-head { gap: 8px; }
+  .care-booking-card-head h3 { font-size: 12px; }
+  .care-record-actions { flex-wrap: wrap; }
+  .care-record-actions .care-cancel-button { margin-left: 0; }
+  .care-success-panel { margin: 10px auto; padding: 26px 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .care-spinner { animation-duration: 1.5s; }
+  .care-hospital-card, .care-primary-button, .care-secondary-button, .care-cancel-button { transition: none; }
+}
